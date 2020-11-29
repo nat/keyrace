@@ -1,7 +1,9 @@
 // gcc keyrace.c -o keyrace -framework ApplicationServices -framework Carbon -Wall -g
 //
-// To start tracking, run as: keyrace <username>
-// To print leaderboard, run with no arguments.
+// To start tracking, run as: keyrace <username> <team>
+// To print leaderboard, run: keyrace <team>
+//
+// Just use "default" as your team if you don't have one.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,13 +15,14 @@
 const char KEYRACE_HOST[] = "159.89.136.69";
 
 char *username;
+char *team;
 int keycount = 0;
 int last_day = -1;
 int last_min = -1;
 
 void upload_count(char *name, int count) {
     char s[1024];
-    snprintf(s, 1024, "curl \"http://%s/count?name=%s&count=%d\" 2> /dev/null  > /dev/null", KEYRACE_HOST, name, count);
+    snprintf(s, 1024, "curl \"http://%s/count?team=%s&name=%s&count=%d\" 2> /dev/null  > /dev/null", KEYRACE_HOST, team, name, count);
     system(s);
 }
 
@@ -84,14 +87,23 @@ void run_loop(void) {
 
 int main (int argc, char **argv) {
 
-    if (argc != 2) {
+    if (argc < 2 || argc > 3) {
+        printf ("Try: \n");
+        printf ("    %s <team> <username> -- to start logging\n", argv[0]);
+        printf ("    %s <team> -- to get the tracking\n", argv[0]);
+        printf("Just use \"default\" as your team if you don't have one.\n");
+        return 1;
+    }
+
+    if (argc == 2) {
         char cmd[1024];
-        snprintf(cmd, 1024, "curl http://%s/", KEYRACE_HOST);
+        snprintf(cmd, 1024, "curl http://%s/?team=%s", KEYRACE_HOST, argv[1]);
         system(cmd);
         return 0;
     }
 
     username = argv[1];
+    team = argv[2];
     strclean(username);
 
     printf ("Starting counting keystrokes. Run without arguments to see today's leaderboard.\n");
