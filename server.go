@@ -3,10 +3,35 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
 var scoreboards map[string]map[string]int
+
+// ByCount implements sort.Interface for []player based on
+// the score field.
+type byCount []player
+
+type player struct {
+	name  string
+	score int
+}
+
+// Len is part of sort.Interface.
+func (s byCount) Len() int {
+	return len(s)
+}
+
+// Swap is part of sort.Interface.
+func (s byCount) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+// Less is part of sort.Interface.
+func (s byCount) Less(i, j int) bool {
+	return s[i].score > s[j].score
+}
 
 func count(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.String())
@@ -46,8 +71,15 @@ func index(w http.ResponseWriter, req *http.Request) {
 	team := req.URL.Query()["team"][0]
 	scoreboard := scoreboards[team]
 
-	for key, value := range scoreboard {
-		fmt.Fprintf(w, "%-20s%d\n", key, value)
+	// Create an array of the players and sort them.
+	var players = []player{}
+	for name, score := range scoreboard {
+		players = append(players, player{name: name, score: score})
+	}
+	sort.Sort(byCount(players))
+
+	for _, player := range players {
+		fmt.Fprintf(w, "%-20s%d\n", player.name, player.score)
 	}
 }
 
