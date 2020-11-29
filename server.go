@@ -9,14 +9,25 @@ import (
 var scoreboards map[string]map[string]int
 
 func count(w http.ResponseWriter, req *http.Request) {
+	fmt.Println(req.URL.String())
+
 	count, err := strconv.Atoi(req.URL.Query()["count"][0])
 	if err != nil {
 		fmt.Fprintf(w, "Errror parsing count")
 		return
 	}
 
-	name := req.URL.Query()["name"][0]
-	team := req.URL.Query()["team"][0]
+	keys, ok := req.URL.Query()["name"]
+	if !ok || len(keys[0]) < 1 {
+		return
+	}
+	name := keys[0]
+
+	keys, ok = req.URL.Query()["team"]
+	if !ok || len(keys[0]) < 1 {
+		return
+	}
+	team := keys[0]
 
 	if _, ok := scoreboards[team]; !ok {
 		scoreboards[team] = make(map[string]int)
@@ -30,8 +41,9 @@ func count(w http.ResponseWriter, req *http.Request) {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
-	team := req.URL.Query()["team"][0]
+	fmt.Println(req.URL.String())
 
+	team := req.URL.Query()["team"][0]
 	scoreboard := scoreboards[team]
 
 	for key, value := range scoreboard {

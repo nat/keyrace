@@ -22,7 +22,7 @@ int last_min = -1;
 
 void upload_count(char *name, int count) {
     char s[1024];
-    snprintf(s, 1024, "curl \"http://%s/count?team=%s&name=%s&count=%d\" 2> /dev/null  > /dev/null", KEYRACE_HOST, team, name, count);
+    snprintf(s, 1024, "curl \"http://%s/count?team=%s&name=%s&count=%d\" 2> /dev/null > /dev/null", KEYRACE_HOST, team, name, count);
     system(s);
 }
 
@@ -102,8 +102,8 @@ int main (int argc, char **argv) {
         return 0;
     }
 
-    username = argv[1];
-    team = argv[2];
+    username = argv[2];
+    team = argv[1];
     strclean(username);
 
     printf ("Starting counting keystrokes. Run without arguments to see today's leaderboard.\n");
