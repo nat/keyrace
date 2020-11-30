@@ -17,7 +17,7 @@ test: $(wildcard *.go)
 	$(CURDIR)/integration-test.sh
 
 deploy:
-	scp keyrace.go root@$(SERVER):
+	scp server.go root@$(SERVER):
 
 clean:
 	rm -rf keyrace keyrace.dSYM
@@ -25,9 +25,11 @@ clean:
 stop:
 	killall -9 keyrace
 
+install: install-agent install-bitbar
+
 install-bitbar:
 	brew cask install bitbar
 	mkdir -p ~/.bitbar
 	defaults write com.matryer.BitBar pluginsDirectory "~/.bitbar"
-	cp keyrace.1s.sh ~/.bitbar
+	ln keyrace.1s.sh ~/.bitbar # hardlink, hopefully on the same filesystem
 	open /Applications/BitBar.app

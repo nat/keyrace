@@ -79,7 +79,6 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef e
     }
 
     keycount++;
-    printf("Got key: %d\n", keycount);
 
     // Upload every minute
     if (last_min != tm.tm_min)
@@ -155,7 +154,7 @@ int main(int argc, char **argv)
 
     keycount = load_savefile();
 
-    printf("Starting counting keystrokes. Run without arguments to see today's leaderboard.\n");
+    printf("Starting counting keystrokes in the background.\n");
 
     int pid = fork();
     if (pid == 0)
