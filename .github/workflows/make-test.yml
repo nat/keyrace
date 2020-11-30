@@ -1,0 +1,15 @@
+on: push
+name: make test
+jobs:
+  maketest:
+    name: make test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        shell: bash
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+      - name: make test
+        run: make test
+        shell: bash

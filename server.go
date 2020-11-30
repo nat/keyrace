@@ -72,6 +72,15 @@ func index(w http.ResponseWriter, req *http.Request) {
 	scoreboard := scoreboards[team]
 
 	// Create an array of the players and sort them.
+	// Long term this is not ideal since we are iterating over every member of the
+	// team every single time. If we change the main scoreboards variable to be
+	//		var scoreboards = map[string][]player
+	// then have an array of players versus the existing map. The existing map allows
+	// us to find the player and update the score easily since the name of the player is the key in the map.
+	// If we change the map to an array, then we need to iterate over the items in the array when
+	// we want to update the count. So in a trade-off we do the iterating here. Should
+	// speed of getting the leaderboard matter in the future this would need to be
+	// revisited and refactored.
 	var players = []player{}
 	for name, score := range scoreboard {
 		players = append(players, player{name: name, score: score})
