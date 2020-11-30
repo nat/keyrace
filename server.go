@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"text/tabwriter"
 	"time"
@@ -44,7 +46,7 @@ func (s byScore) Less(i, j int) bool {
 }
 
 func count(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.String())
+	fmt.Println(req.URL.String(), getIP(req))
 
 	count, err := strconv.Atoi(req.URL.Query()["count"][0])
 	if err != nil {
@@ -52,17 +54,17 @@ func count(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	keys, ok := req.URL.Query()["name"]
-	if !ok || len(keys[0]) < 1 {
+	name := getStringParam(req, "name")
+	if len(name) == 0 {
+		fmt.Fprintln(w, "name must be greater than 0 and less than 50 characters long")
 		return
 	}
-	name := keys[0]
 
-	keys, ok = req.URL.Query()["team"]
-	if !ok || len(keys[0]) < 1 {
+	teamName := getStringParam(req, "team")
+	if len(teamName) == 0 {
+		fmt.Fprintln(w, "team must be greater than 0 and less than 50 characters long")
 		return
 	}
-	teamName := keys[0]
 
 	if _, ok := scoreboards[teamName]; !ok {
 		scoreboards[teamName] = &team{}
@@ -104,13 +106,13 @@ func count(w http.ResponseWriter, req *http.Request) {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.String())
+	fmt.Println(req.URL.String(), getIP(req))
 
-	keys, ok := req.URL.Query()["team"]
-	if !ok || len(keys[0]) < 1 {
+	teamName := getStringParam(req, "team")
+	if len(teamName) == 0 {
+		fmt.Fprintln(w, "team must be greater than 0 and less than 50 characters long")
 		return
 	}
-	teamName := keys[0]
 
 	scoreboard := scoreboards[teamName]
 
@@ -125,6 +127,16 @@ func index(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "%s\t%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
 	}
 	t.Flush()
+}
+
+// getStringParam makes sure a string parameter passed to the server fits the constraints.
+// If not it will return an empty string.
+func getStringParam(req *http.Request, key string) string {
+	keys, ok := req.URL.Query()[key]
+	if !ok || len(keys[0]) < 1 || len(keys[0]) >= 50 {
+		return ""
+	}
+	return keys[0]
 }
 
 // humanTime returns a human-readable approximation of a time.Time
@@ -155,6 +167,37 @@ func humanTime(t time.Time) string {
 		return fmt.Sprintf("%d months", hours/24/30)
 	}
 	return fmt.Sprintf("%d years", int(d.Hours())/24/365)
+}
+
+// getIP gets the IP of the incoming request.
+func getIP(r *http.Request) string {
+	// Get the IP from the X-REAL-IP header
+	ip := r.Header.Get("X-REAL-IP")
+	netIP := net.ParseIP(ip)
+	if netIP != nil {
+		return ip
+	}
+
+	// Get the IP from X-FORWARDED-FOR header
+	ips := r.Header.Get("X-FORWARDED-FOR")
+	splitIps := strings.Split(ips, ",")
+	for _, ip := range splitIps {
+		netIP := net.ParseIP(ip)
+		if netIP != nil {
+			return ip
+		}
+	}
+
+	// Get the IP from RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	netIP = net.ParseIP(ip)
+	if netIP != nil {
+		return ip
+	}
+	return ""
 }
 
 func main() {
