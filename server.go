@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+	"text/tabwriter"
 	"time"
 )
 
@@ -71,7 +72,7 @@ func count(w http.ResponseWriter, req *http.Request) {
 	if ok {
 		// Find the matching player.
 		for index, player := range scoreboard.players {
-			if player.name == "name" {
+			if player.name == name {
 				// Update the player and break the loop, returning early.
 				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.score, count)
 				player.score = count
@@ -105,14 +106,25 @@ func count(w http.ResponseWriter, req *http.Request) {
 func index(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.String())
 
-	team := req.URL.Query()["team"][0]
-	scoreboard := scoreboards[team]
+	keys, ok := req.URL.Query()["team"]
+	if !ok || len(keys[0]) < 1 {
+		return
+	}
+	teamName := keys[0]
+
+	scoreboard := scoreboards[teamName]
 
 	sort.Sort(byScore(scoreboard.players))
 
+	// Format left-aligned in tab-separated columns of minimal width 5
+	// and at least one blank of padding (so wider column entries do not
+	// touch each other).
+	t := new(tabwriter.Writer)
+	t.Init(w, 5, 0, 1, '\t', 0)
 	for _, player := range scoreboard.players {
-		fmt.Fprintf(w, "%-20s%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
+		fmt.Fprintf(w, "%s\t%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
 	}
+	t.Flush()
 }
 
 // humanTime returns a human-readable approximation of a time.Time
