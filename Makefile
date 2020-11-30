@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-framework ApplicationServices -framework Carbon -Wall -g
 SERVER=159.89.136.69
 
-all: keyrace install-bitbar
+all: keyrace
 
 keyrace: keyrace.c
 	gcc keyrace.c $(CFLAGS) -o keyrace
