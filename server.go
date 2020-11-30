@@ -124,7 +124,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 	t := new(tabwriter.Writer)
 	t.Init(w, 5, 0, 1, '\t', 0)
 	for _, player := range scoreboard.players {
-		fmt.Fprintf(w, "%s\t%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
+		fmt.Fprintf(w, "%-20s\t%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
 	}
 	t.Flush()
 }

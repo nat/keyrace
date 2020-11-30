@@ -8,6 +8,9 @@
 # <bitbar.image>http://i.imgur.com/qaIxpJN.png</bitbar.image> <!-- fix me -->
 
 
-echo "[ `cat /tmp/keyrace.tmp` keys ]"
+KEYCOUNT=`cat /tmp/keyrace.tmp`
+export LC_NUEMRIC=en_US
+KC_FORMATTED=`printf "%'.f\n" $KEYCOUNT`
+echo "$KC_FORMATTED keypresses today"
 echo ---
 curl http://159.89.136.69/leaderboard?team=default 2> /dev/null
