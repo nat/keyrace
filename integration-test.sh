@@ -12,7 +12,7 @@ SERVER_HOST=http://localhost:80
 function finish {
 	# There is no "pidof" command on a mac by default
 	# so `brew install pidof`
-	kill -9 $(pidof keyrace-server)
+	kill -15 $(pidof keyrace-server)
 }
 
 # Start the server
