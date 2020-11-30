@@ -1,7 +1,8 @@
 CC=gcc
 CFLAGS=-framework ApplicationServices -framework Carbon -Wall -g
+SERVER=159.89.136.69
 
-all: keyrace
+all: keyrace install-bitbar
 
 keyrace: keyrace.c
 	gcc keyrace.c $(CFLAGS) -o keyrace
@@ -16,10 +17,17 @@ test: $(wildcard *.go)
 	$(CURDIR)/integration-test.sh
 
 deploy:
-	scp server.go root@159.89.136.69:
+	scp keyrace.go root@$(SERVER):
 
 clean:
 	rm -rf keyrace keyrace.dSYM
 
 stop:
 	killall -9 keyrace
+
+install-bitbar:
+	brew cask install bitbar
+	mkdir -p ~/.bitbar
+	defaults write com.matryer.BitBar pluginsDirectory "~/.bitbar"
+	cp keyrace.1s.sh ~/.bitbar
+	open /Applications/BitBar.app

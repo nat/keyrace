@@ -87,8 +87,9 @@ CGEventRef CGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef e
         last_min = tm.tm_min;
 
         upload_count(username, keycount);
-        update_savefile(keycount);
     }
+
+    update_savefile(keycount);
 
     return event;
 }
