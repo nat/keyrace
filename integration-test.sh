@@ -12,13 +12,13 @@ SERVER_HOST=http://localhost:80
 function finish {
 	# There is no "pidof" command on a mac by default
 	# so `brew install pidof`
-	kill -15 $(pidof keyrace-server)
+	sudo kill -15 $(pidof keyrace-server)
 }
 
 # Start the server
 echo "Starting the server..."
 ( set -x; exec \
-	./keyrace-server
+	sudo ./keyrace-server
 	&> "server.log"
 ) &
 # make sure that if the script exits unexpectedly, we stop this daemon we just started
@@ -31,6 +31,7 @@ while ! curl $SERVER_HOST &> /dev/null; do
 	if [ $tries -le 0 ]; then
 		echo >&2 "error: server failed to start"
 		echo >&2 "  check server.log for details"
+		cat server.log
 		false
 	fi
 	sleep 2
