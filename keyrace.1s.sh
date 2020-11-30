@@ -13,4 +13,7 @@ export LC_NUEMRIC=en_US
 KC_FORMATTED=`printf "%'.f\n" $KEYCOUNT`
 echo "$KC_FORMATTED keypresses today"
 echo ---
-curl http://159.89.136.69/leaderboard?team=default 2> /dev/null
+output=$(curl http://159.89.136.69/leaderboard?team=default 2> /dev/null)
+while IFS= read -r line; do
+	echo "$line | size=14 font=Courier"
+done <<< "$output" | column -t -s $'\t'
