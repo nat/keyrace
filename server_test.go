@@ -15,10 +15,13 @@ func TestSort(t *testing.T) {
 	}
 
 	// We sort it.
-	sort.Sort(byCount(team))
+	sort.Sort(byScore(team))
 
 	// Now sue should be first, etc.
 	if team[0].name != "sue" {
-		t.Fatalf("expected sue to be first")
+		t.Fatalf("expected sue to be first, got: %s", team[0].name)
+	}
+	if team[3].name != "bob" {
+		t.Fatalf("expected bob to be last, got: %s", team[3].name)
 	}
 }

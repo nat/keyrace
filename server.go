@@ -5,31 +5,33 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 )
 
-var scoreboards map[string]map[string]int
+var scoreboards map[string][]player
 
-// ByCount implements sort.Interface for []player based on
+// byScore implements sort.Interface for []player based on
 // the score field.
-type byCount []player
+type byScore []player
 
 type player struct {
-	name  string
-	score int
+	name              string
+	score             int
+	timeLastCheckedIn time.Time
 }
 
 // Len is part of sort.Interface.
-func (s byCount) Len() int {
+func (s byScore) Len() int {
 	return len(s)
 }
 
 // Swap is part of sort.Interface.
-func (s byCount) Swap(i, j int) {
+func (s byScore) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
 // Less is part of sort.Interface.
-func (s byCount) Less(i, j int) bool {
+func (s byScore) Less(i, j int) bool {
 	return s[i].score > s[j].score
 }
 
@@ -55,13 +57,27 @@ func count(w http.ResponseWriter, req *http.Request) {
 	team := keys[0]
 
 	if _, ok := scoreboards[team]; !ok {
-		scoreboards[team] = make(map[string]int)
+		scoreboards[team] = []player{}
 	}
 
 	scoreboard, ok := scoreboards[team]
 	if ok {
-		fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, scoreboard[name], count)
-		scoreboard[name] = count
+		// Find the matching player.
+		for index, player := range scoreboard {
+			if player.name == "name" {
+				// Update the player and break the loop, returning early.
+				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.score, count)
+				player.score = count
+				player.timeLastCheckedIn = time.Now()
+				scoreboards[team][index] = player
+				// Return early.
+				return
+			}
+		}
+
+		// If we could not find the matching player, we need to create one.
+		fmt.Fprintf(w, "updated count for %s from 0 to %d\n", name, count)
+		scoreboards[team] = append(scoreboards[team], player{name: name, score: count, timeLastCheckedIn: time.Now()})
 	}
 }
 
@@ -71,29 +87,45 @@ func index(w http.ResponseWriter, req *http.Request) {
 	team := req.URL.Query()["team"][0]
 	scoreboard := scoreboards[team]
 
-	// Create an array of the players and sort them.
-	// Long term this is not ideal since we are iterating over every member of the
-	// team every single time. If we change the main scoreboards variable to be
-	//		var scoreboards = map[string][]player
-	// then have an array of players versus the existing map. The existing map allows
-	// us to find the player and update the score easily since the name of the player is the key in the map.
-	// If we change the map to an array, then we need to iterate over the items in the array when
-	// we want to update the count. So in a trade-off we do the iterating here. Should
-	// speed of getting the leaderboard matter in the future this would need to be
-	// revisited and refactored.
-	var players = []player{}
-	for name, score := range scoreboard {
-		players = append(players, player{name: name, score: score})
-	}
-	sort.Sort(byCount(players))
+	sort.Sort(byScore(scoreboard))
 
-	for _, player := range players {
-		fmt.Fprintf(w, "%-20s%d\n", player.name, player.score)
+	for _, player := range scoreboard {
+		fmt.Fprintf(w, "%-20s%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
 	}
 }
 
+// humanTime returns a human-readable approximation of a time.Time
+// (eg. "About a minute", "4 hours ago", etc.).
+// This is lovingly inspired by:
+// https://github.com/docker/go-units/blob/master/duration.go
+func humanTime(t time.Time) string {
+	d := time.Since(t)
+	if seconds := int(d.Seconds()); seconds < 1 {
+		return "Less than a second"
+	} else if seconds == 1 {
+		return "1 second"
+	} else if seconds < 60 {
+		return fmt.Sprintf("%d seconds", seconds)
+	} else if minutes := int(d.Minutes()); minutes == 1 {
+		return "About a minute"
+	} else if minutes < 60 {
+		return fmt.Sprintf("%d minutes", minutes)
+	} else if hours := int(d.Hours() + 0.5); hours == 1 {
+		return "About an hour"
+	} else if hours < 48 {
+		return fmt.Sprintf("%d hours", hours)
+	} else if hours < 24*7*2 {
+		return fmt.Sprintf("%d days", hours/24)
+	} else if hours < 24*30*2 {
+		return fmt.Sprintf("%d weeks", hours/24/7)
+	} else if hours < 24*365*2 {
+		return fmt.Sprintf("%d months", hours/24/30)
+	}
+	return fmt.Sprintf("%d years", int(d.Hours())/24/365)
+}
+
 func main() {
-	scoreboards = make(map[string]map[string]int)
+	scoreboards = make(map[string][]player)
 
 	http.HandleFunc("/count", count)
 	http.HandleFunc("/", index)
