@@ -5,10 +5,17 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
-var scoreboards map[string][]player
+var scoreboards map[string]*team
+
+type team struct {
+	// We have a mutex here so we can add and update players safely.
+	mu      sync.Mutex
+	players []player
+}
 
 // byScore implements sort.Interface for []player based on
 // the score field.
@@ -54,22 +61,28 @@ func count(w http.ResponseWriter, req *http.Request) {
 	if !ok || len(keys[0]) < 1 {
 		return
 	}
-	team := keys[0]
+	teamName := keys[0]
 
-	if _, ok := scoreboards[team]; !ok {
-		scoreboards[team] = []player{}
+	if _, ok := scoreboards[teamName]; !ok {
+		scoreboards[teamName] = &team{}
 	}
 
-	scoreboard, ok := scoreboards[team]
+	scoreboard, ok := scoreboards[teamName]
 	if ok {
 		// Find the matching player.
-		for index, player := range scoreboard {
+		for index, player := range scoreboard.players {
 			if player.name == "name" {
 				// Update the player and break the loop, returning early.
 				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.score, count)
 				player.score = count
 				player.timeLastCheckedIn = time.Now()
-				scoreboards[team][index] = player
+
+				// Lock the mutex while we update the count.
+				scoreboards[teamName].mu.Lock()
+				scoreboards[teamName].players[index] = player
+				// Unlock the mutex since we are done updating.
+				scoreboards[teamName].mu.Unlock()
+
 				// Return early.
 				return
 			}
@@ -77,7 +90,15 @@ func count(w http.ResponseWriter, req *http.Request) {
 
 		// If we could not find the matching player, we need to create one.
 		fmt.Fprintf(w, "updated count for %s from 0 to %d\n", name, count)
-		scoreboards[team] = append(scoreboards[team], player{name: name, score: count, timeLastCheckedIn: time.Now()})
+		// Lock the mutex while we update the count.
+		scoreboards[teamName].mu.Lock()
+		scoreboards[teamName].players = append(scoreboards[teamName].players, player{
+			name:              name,
+			score:             count,
+			timeLastCheckedIn: time.Now(),
+		})
+		// Unlock the mutex since we are done updating.
+		scoreboards[teamName].mu.Unlock()
 	}
 }
 
@@ -87,9 +108,9 @@ func index(w http.ResponseWriter, req *http.Request) {
 	team := req.URL.Query()["team"][0]
 	scoreboard := scoreboards[team]
 
-	sort.Sort(byScore(scoreboard))
+	sort.Sort(byScore(scoreboard.players))
 
-	for _, player := range scoreboard {
+	for _, player := range scoreboard.players {
 		fmt.Fprintf(w, "%-20s%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
 	}
 }
@@ -125,7 +146,7 @@ func humanTime(t time.Time) string {
 }
 
 func main() {
-	scoreboards = make(map[string][]player)
+	scoreboards = make(map[string]*team)
 
 	http.HandleFunc("/count", count)
 	http.HandleFunc("/", index)
