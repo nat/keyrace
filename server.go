@@ -125,13 +125,26 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 	sort.Sort(byScore(scoreboard.Players))
 
+	// Get the location for Pacific time.
+	location, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		log.Fatalf("Loading America/Los_Angeles timezone failed: %v", err)
+	}
+
 	// Format left-aligned in tab-separated columns of minimal width 5
 	// and at least one blank of padding (so wider column entries do not
 	// touch each other).
 	t := new(tabwriter.Writer)
 	t.Init(w, 5, 0, 1, '\t', 0)
 	for _, player := range scoreboard.Players {
-		fmt.Fprintf(w, "%s\t%d\t%s\n", player.Name, player.Score, humanTime(player.TimeLastCheckedIn))
+		// Check if the player has showed up "today" based on Pacific time.
+		localTimeDay := player.TimeLastCheckedIn.In(location).Day()
+		nowTimeDay := time.Now().In(location).Day()
+		if localTimeDay == nowTimeDay {
+			// Only print the player if they have checked in "today", where today
+			// is today in pacific standard time.
+			fmt.Fprintf(w, "%s\t%d\t%s\n", player.Name, player.Score, humanTime(player.TimeLastCheckedIn))
+		}
 	}
 	t.Flush()
 }
