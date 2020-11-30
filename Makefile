@@ -8,6 +8,7 @@ keyrace: keyrace.c
 	gcc keyrace.c $(CFLAGS) -o keyrace
 
 keyrace-server: $(wildcard *.go)
+	go mod vendor
 	go build -o $@ $?
 
 test: $(wildcard *.go)

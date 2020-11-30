@@ -177,7 +177,7 @@ func getStringParam(req *http.Request, key string) string {
 	if goaway.IsProfane(keys[0]) {
 		return ""
 	}
-	return keys[0]
+	return strings.Replace(keys[0], "dick", "richard", -1)
 }
 
 // humanTime returns a human-readable approximation of a time.Time
