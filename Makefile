@@ -15,5 +15,11 @@ test: $(wildcard *.go)
 	@echo "Running the integration tests..."
 	$(CURDIR)/integration-test.sh
 
+deploy:
+	scp server.go root@159.89.136.69:
+
 clean:
 	rm -rf keyrace keyrace.dSYM
+
+stop:
+	killall -9 keyrace
