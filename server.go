@@ -1,33 +1,40 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"text/tabwriter"
 	"time"
 )
 
-var scoreboards map[string]*team
+var scoreboards map[string]*Team
 
-type team struct {
+type Team struct {
 	// We have a mutex here so we can add and update players safely.
 	mu      sync.Mutex
-	players []player
+	Players []Player
 }
 
 // byScore implements sort.Interface for []player based on
 // the score field.
-type byScore []player
+type byScore []Player
 
-type player struct {
-	name              string
-	score             int
-	timeLastCheckedIn time.Time
+type Player struct {
+	Name              string
+	Score             int
+	TimeLastCheckedIn time.Time
 }
 
 // Len is part of sort.Interface.
@@ -42,7 +49,7 @@ func (s byScore) Swap(i, j int) {
 
 // Less is part of sort.Interface.
 func (s byScore) Less(i, j int) bool {
-	return s[i].score > s[j].score
+	return s[i].Score > s[j].Score
 }
 
 func count(w http.ResponseWriter, req *http.Request) {
@@ -67,22 +74,22 @@ func count(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if _, ok := scoreboards[teamName]; !ok {
-		scoreboards[teamName] = &team{}
+		scoreboards[teamName] = &Team{}
 	}
 
 	scoreboard, ok := scoreboards[teamName]
 	if ok {
 		// Find the matching player.
-		for index, player := range scoreboard.players {
-			if player.name == name {
+		for index, player := range scoreboard.Players {
+			if player.Name == name {
 				// Update the player and break the loop, returning early.
-				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.score, count)
-				player.score = count
-				player.timeLastCheckedIn = time.Now()
+				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.Score, count)
+				player.Score = count
+				player.TimeLastCheckedIn = time.Now()
 
 				// Lock the mutex while we update the count.
 				scoreboards[teamName].mu.Lock()
-				scoreboards[teamName].players[index] = player
+				scoreboards[teamName].Players[index] = player
 				// Unlock the mutex since we are done updating.
 				scoreboards[teamName].mu.Unlock()
 
@@ -95,10 +102,10 @@ func count(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "updated count for %s from 0 to %d\n", name, count)
 		// Lock the mutex while we update the count.
 		scoreboards[teamName].mu.Lock()
-		scoreboards[teamName].players = append(scoreboards[teamName].players, player{
-			name:              name,
-			score:             count,
-			timeLastCheckedIn: time.Now(),
+		scoreboards[teamName].Players = append(scoreboards[teamName].Players, Player{
+			Name:              name,
+			Score:             count,
+			TimeLastCheckedIn: time.Now(),
 		})
 		// Unlock the mutex since we are done updating.
 		scoreboards[teamName].mu.Unlock()
@@ -116,15 +123,15 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 	scoreboard := scoreboards[teamName]
 
-	sort.Sort(byScore(scoreboard.players))
+	sort.Sort(byScore(scoreboard.Players))
 
 	// Format left-aligned in tab-separated columns of minimal width 5
 	// and at least one blank of padding (so wider column entries do not
 	// touch each other).
 	t := new(tabwriter.Writer)
 	t.Init(w, 5, 0, 1, '\t', 0)
-	for _, player := range scoreboard.players {
-		fmt.Fprintf(w, "%s\t%d\t%s\n", player.name, player.score, humanTime(player.timeLastCheckedIn))
+	for _, player := range scoreboard.Players {
+		fmt.Fprintf(w, "%s\t%d\t%s\n", player.Name, player.Score, humanTime(player.TimeLastCheckedIn))
 	}
 	t.Flush()
 }
@@ -200,8 +207,57 @@ func getIP(r *http.Request) string {
 	return ""
 }
 
+// saveStateToFile writes the JSON contents of the current scoreboard to file.
+// The path to the file is passed in to the function.
+func saveStateToFile(file string) {
+	content, err := json.MarshalIndent(scoreboards, "", " ")
+	if err != nil {
+		log.Fatalf("creating JSON to save to file failed: %v", err)
+	}
+
+	if err := ioutil.WriteFile(file, content, 0644); err != nil {
+		log.Fatalf("saving JSON state to file %s failed: %v", file, err)
+	}
+	fmt.Printf("Saved JSON state to file: %s\n", file)
+}
+
+// loadStateFromFile tries to load the state from the file if it exists.
+func loadStateFromFile(file string) {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		// The file does not exist, let's return early.
+		return
+	}
+
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Fatalf("reading from file %s failed: %v", file, err)
+	}
+
+	// Try to parse the content as JSON.
+	if err := json.Unmarshal(b, &scoreboards); err != nil {
+		log.Fatalf("reading content in file %s  as JSON failed: %v", file, err)
+	}
+}
+
 func main() {
-	scoreboards = make(map[string]*team)
+	scoreboards = make(map[string]*Team)
+	tmpfile := filepath.Join(os.TempDir(), "keyrace.json")
+
+	// On ^C, or SIGTERM gracefully handle exit.
+	signals := make(chan os.Signal)
+	signal.Notify(signals, os.Interrupt)
+	signal.Notify(signals, syscall.SIGTERM)
+	go func() {
+		for sig := range signals {
+			// Save the file.
+			saveStateToFile(tmpfile)
+			fmt.Printf("Received %s, exiting.\n", sig.String())
+			os.Exit(0)
+		}
+	}()
+
+	// Try to load from the state file if it exists.
+	loadStateFromFile(tmpfile)
 
 	http.HandleFunc("/count", count)
 	http.HandleFunc("/", index)
