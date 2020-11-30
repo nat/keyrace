@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"text/tabwriter"
 	"time"
+
+	goaway "github.com/TwinProduction/go-away"
 )
 
 var scoreboards map[string]*Team
@@ -125,28 +127,43 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 	sort.Sort(byScore(scoreboard.Players))
 
-	// Get the location for Pacific time.
-	location, err := time.LoadLocation("America/Los_Angeles")
-	if err != nil {
-		log.Fatalf("Loading America/Los_Angeles timezone failed: %v", err)
-	}
-
 	// Format left-aligned in tab-separated columns of minimal width 5
 	// and at least one blank of padding (so wider column entries do not
 	// touch each other).
 	t := new(tabwriter.Writer)
 	t.Init(w, 5, 0, 1, '\t', 0)
-	for _, player := range scoreboard.Players {
-		// Check if the player has showed up "today" based on Pacific time.
-		localTimeDay := player.TimeLastCheckedIn.In(location).Day()
-		nowTimeDay := time.Now().In(location).Day()
-		if localTimeDay == nowTimeDay {
-			// Only print the player if they have checked in "today", where today
-			// is today in pacific standard time.
+	for index, player := range scoreboard.Players {
+		// Check if the player has showed up "today".
+		// TODO(jess): We should probably sort out whatever timezone the server is running in
+		// in the future.
+		if isToday(player.TimeLastCheckedIn) {
 			fmt.Fprintf(w, "%s\t%d\t%s\n", player.Name, player.Score, humanTime(player.TimeLastCheckedIn))
+		} else {
+			// Remove the player from the slice.
+			scoreboards[teamName].Players = removeFromSlice(scoreboard.Players, index)
+
 		}
 	}
 	t.Flush()
+}
+
+func removeFromSlice(slice []Player, index int) []Player {
+	return append(slice[:index], slice[index+1:]...)
+}
+
+// isToday checks is the time.Time is from "today" where "today" is in terms of
+// PT.
+func isToday(t time.Time) bool {
+	loc, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		log.Fatalf("getting time zone location for America/Los_Angeles failed: %v", err)
+	}
+	// Get today in terms of our location.
+	today := time.Now().UTC().In(loc).Day()
+	// Get the last checked-in date in terms of our location.
+	lastCheckedIn := t.UTC().In(loc).Day()
+
+	return today == lastCheckedIn
 }
 
 // getStringParam makes sure a string parameter passed to the server fits the constraints.
@@ -154,6 +171,10 @@ func index(w http.ResponseWriter, req *http.Request) {
 func getStringParam(req *http.Request, key string) string {
 	keys, ok := req.URL.Query()[key]
 	if !ok || len(keys[0]) < 1 || len(keys[0]) >= 50 {
+		return ""
+	}
+	// Make sure it is not offensive.
+	if goaway.IsProfane(keys[0]) {
 		return ""
 	}
 	return keys[0]
