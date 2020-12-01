@@ -278,16 +278,14 @@ func main() {
 	tmpfile := filepath.Join(os.TempDir(), "keyrace.json")
 
 	// On ^C, or SIGTERM gracefully handle exit.
-	signals := make(chan os.Signal)
-	signal.Notify(signals, os.Interrupt)
-	signal.Notify(signals, syscall.SIGTERM)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		for sig := range signals {
-			// Save the file.
-			saveStateToFile(tmpfile)
-			fmt.Printf("Received %s, exiting.\n", sig.String())
-			os.Exit(0)
-		}
+		sig := <-signals
+		// Save the file.
+		saveStateToFile(tmpfile)
+		fmt.Printf("Received %s, exiting.\n", sig.String())
+		os.Exit(0)
 	}()
 
 	// Try to load from the state file if it exists.
