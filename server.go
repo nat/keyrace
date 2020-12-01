@@ -175,9 +175,10 @@ func getStringParam(req *http.Request, key string) string {
 	}
 	// Make sure it is not offensive.
 	if goaway.IsProfane(keys[0]) {
+		fmt.Println("[offensive]", req.URL.String(), getIP(req))
 		return ""
 	}
-	return strings.Replace(keys[0], "dick", "richard", -1)
+	return keys[0]
 }
 
 // humanTime returns a human-readable approximation of a time.Time
