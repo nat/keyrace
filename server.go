@@ -19,14 +19,15 @@ import (
 	"time"
 
 	goaway "github.com/TwinProduction/go-away"
+	"golang.org/x/crypto/acme/autocert"
 )
 
-var scoreboards map[string]*Team
+var scores ScoreData
 
-type Team struct {
-	// We have a mutex here so we can add and update players safely.
-	mu      sync.Mutex
+type ScoreData struct {
 	Players []Player
+	// We have a mutex here so we can create and update players safely.
+	mu sync.Mutex
 }
 
 // byScore implements sort.Interface for []player based on
@@ -34,9 +35,12 @@ type Team struct {
 type byScore []Player
 
 type Player struct {
-	Name              string
+	Username          string
+	Token             string
 	Score             int
 	TimeLastCheckedIn time.Time
+	// We have a mutex here so we can update a player safely.
+	mu sync.Mutex
 }
 
 // Len is part of sort.Interface.
@@ -57,90 +61,113 @@ func (s byScore) Less(i, j int) bool {
 func count(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.String(), getIP(req))
 
+	// Get the token from the authorization header.
+	ghToken := req.Header.Get("Authorization")
+	splitToken := strings.Split(ghToken, "Bearer ")
+	// Make sure we actually have a token.
+	if len(splitToken) <= 1 {
+		fmt.Println("invalid GitHub token")
+		return
+	}
+	ghToken = splitToken[1]
+
 	count, err := strconv.Atoi(req.URL.Query()["count"][0])
 	if err != nil {
-		fmt.Fprintf(w, "Errror parsing count")
+		fmt.Printf("error parsing count: %v", err)
 		return
 	}
 
-	name := getStringParam(req, "name")
-	if len(name) == 0 {
-		fmt.Fprintln(w, "name must be greater than 0 and less than 50 characters long")
-		return
-	}
-
-	teamName := getStringParam(req, "team")
-	if len(teamName) == 0 {
-		fmt.Fprintln(w, "team must be greater than 0 and less than 50 characters long")
-		return
-	}
-
-	if _, ok := scoreboards[teamName]; !ok {
-		scoreboards[teamName] = &Team{}
-	}
-
-	scoreboard, ok := scoreboards[teamName]
-	if ok {
-		// Find the matching player.
-		for index, player := range scoreboard.Players {
-			if player.Name == name {
-				// Update the player and break the loop, returning early.
-				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.Score, count)
-				player.Score = count
-				player.TimeLastCheckedIn = time.Now()
-
-				// Lock the mutex while we update the count.
-				scoreboards[teamName].mu.Lock()
-				scoreboards[teamName].Players[index] = player
-				// Unlock the mutex since we are done updating.
-				scoreboards[teamName].mu.Unlock()
-
-				// Return early.
-				return
+	// Find the matching player our players.
+	for index, player := range scores.Players {
+		// Try to find the player by their token.
+		// This ensures we don't over-call to the API.
+		if player.Token == ghToken {
+			// Set their username if it is empty.
+			if player.Username == "" {
+				player.setGitHubDataFromToken()
 			}
-		}
+			// Update the player and break the loop, returning early.
+			fmt.Printf("updated count for %s from %d to %d\n", player.Username, player.Score, count)
+			player.Score = count
+			player.TimeLastCheckedIn = time.Now()
 
-		// If we could not find the matching player, we need to create one.
-		fmt.Fprintf(w, "updated count for %s from 0 to %d\n", name, count)
-		// Lock the mutex while we update the count.
-		scoreboards[teamName].mu.Lock()
-		scoreboards[teamName].Players = append(scoreboards[teamName].Players, Player{
-			Name:              name,
-			Score:             count,
-			TimeLastCheckedIn: time.Now(),
-		})
-		// Unlock the mutex since we are done updating.
-		scoreboards[teamName].mu.Unlock()
+			// TODO: update the user's organizations based on some time from the time last checked in.
+			// Or maybe its a button on the client side.
+
+			// Only update the count if the username for the player is not empty.
+			if len(player.Username) > 0 {
+				// Lock the mutex while we update the count.
+				scores.mu.Lock()
+				scores.Players[index] = player
+				// Unlock the mutex since we are done updating.
+				scores.mu.Unlock()
+			}
+
+			// Return early.
+			return
+		}
 	}
+
+	// If we did not find the play based on their token, try to find the player
+	// based on their username.
+	current_player := Player{
+		Username:          "",
+		Token:             ghToken,
+		Score:             count,
+		TimeLastCheckedIn: time.Now(),
+	}
+	current_player.setGitHubDataFromToken()
+	if len(current_player.Username) == 0 {
+		fmt.Println("github username cannot be empty")
+		return
+	}
+
+	for index, player := range scores.Players {
+		// Try to find the player based on their username.
+		if player.Username == current_player.Username {
+			// Update the player and break the loop, returning early.
+			fmt.Printf("updated count for %s from %d to %d\n", player.Username, player.Score, count)
+
+			// Only update the count if the username for the player is not empty.
+			// Lock the mutex while we update the count.
+			scores.mu.Lock()
+			scores.Players[index] = current_player
+			// Unlock the mutex since we are done updating.
+			scores.mu.Unlock()
+
+			// Return early.
+			return
+		}
+	}
+
+	// If we could not find the matching player, we need to create one.
+	fmt.Fprintf(w, "updated count for %s from 0 to %d\n", current_player.Username, count)
+	// Lock the mutex while we update the count.
+	scores.mu.Lock()
+	scores.Players = append(scores.Players, current_player)
+	// Unlock the mutex since we are done updating.
+	scores.mu.Unlock()
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.String(), getIP(req))
 
-	teamName := getStringParam(req, "team")
-	if len(teamName) == 0 {
-		fmt.Fprintln(w, "team must be greater than 0 and less than 50 characters long")
-		return
-	}
-
-	scoreboard := scoreboards[teamName]
-
-	sort.Sort(byScore(scoreboard.Players))
+	sort.Sort(byScore(scores.Players))
 
 	// Format left-aligned in tab-separated columns of minimal width 5
 	// and at least one blank of padding (so wider column entries do not
 	// touch each other).
 	t := new(tabwriter.Writer)
 	t.Init(w, 5, 0, 1, '\t', 0)
-	for index, player := range scoreboard.Players {
+	for index, player := range scores.Players {
 		// Check if the player has showed up "today".
 		// TODO(jess): We should probably sort out whatever timezone the server is running in
 		// in the future.
 		if isToday(player.TimeLastCheckedIn) {
-			fmt.Fprintf(w, "%s\t%d\t%s\n", player.Name, player.Score, humanTime(player.TimeLastCheckedIn))
+			fmt.Fprintf(w, "%s\t%d\t%s\n", player.Username, player.Score, humanTime(player.TimeLastCheckedIn))
 		} else {
 			// Remove the player from the slice.
-			scoreboards[teamName].Players = removeFromSlice(scoreboard.Players, index)
+			scores.Players = removeFromSlice(scores.Players, index)
 
 		}
 	}
@@ -175,6 +202,7 @@ func getStringParam(req *http.Request, key string) string {
 	}
 	// Make sure it is not offensive.
 	if goaway.IsProfane(keys[0]) {
+		fmt.Println("[offensive]", req.URL.String(), getIP(req))
 		return ""
 	}
 	return keys[0]
@@ -244,7 +272,7 @@ func getIP(r *http.Request) string {
 // saveStateToFile writes the JSON contents of the current scoreboard to file.
 // The path to the file is passed in to the function.
 func saveStateToFile(file string) {
-	content, err := json.MarshalIndent(scoreboards, "", " ")
+	content, err := json.MarshalIndent(scores, "", " ")
 	if err != nil {
 		log.Fatalf("creating JSON to save to file failed: %v", err)
 	}
@@ -268,13 +296,47 @@ func loadStateFromFile(file string) {
 	}
 
 	// Try to parse the content as JSON.
-	if err := json.Unmarshal(b, &scoreboards); err != nil {
+	if err := json.Unmarshal(b, &scores); err != nil {
 		log.Fatalf("reading content in file %s  as JSON failed: %v", file, err)
 	}
 }
 
+type GitHubUser struct {
+	ID    int64  `json:"id"`
+	Login string `json:"login"`
+	Name  string `json:"name"`
+}
+
+func (p *Player) setGitHubDataFromToken() {
+	// Create a new request using http
+	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+
+	// add authorization header to the req
+	req.Header.Add("Authorization", "token "+p.Token)
+	req.Header.Add("Accept", "application/vnd.github.v3+json")
+
+	// Send req using http Client
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("response from the github API errored\n[ERRO] -", err)
+	}
+
+	var user GitHubUser
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		log.Println("decoding the response from the github api failed.\n[ERRO] -", err)
+	}
+
+	// Set the username.
+	p.Username = user.Login
+
+}
+
 func main() {
-	scoreboards = make(map[string]*Team)
+	scores = ScoreData{
+		mu:      sync.Mutex{},
+		Players: []Player{},
+	}
 	tmpfile := filepath.Join(os.TempDir(), "keyrace.json")
 
 	// On ^C, or SIGTERM gracefully handle exit.
@@ -293,8 +355,13 @@ func main() {
 	// Try to load from the state file if it exists.
 	loadStateFromFile(tmpfile)
 
-	http.HandleFunc("/count", count)
-	http.HandleFunc("/", index)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/count", count)
+	mux.HandleFunc("/", index)
 
-	http.ListenAndServe(":80", nil)
+	// TODO: skip this if in DEV mode, maybe set an env variable.
+	// We need to generate the certificate.
+	domain := "keyrace.app"
+	fmt.Printf("Server is listening at https://%s..\n", domain)
+	log.Fatal(http.Serve(autocert.NewListener(domain), mux))
 }

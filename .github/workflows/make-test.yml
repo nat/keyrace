@@ -12,3 +12,5 @@ jobs:
       - name: make test
         run: make test
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
