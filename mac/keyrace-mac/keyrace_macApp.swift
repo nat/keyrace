@@ -83,7 +83,7 @@ class KeyTap {
     var keyTrapSetup = false
     var KEYRACE_HOST = "keyrace.app"
     var minutes = [Int](repeating:0, count:1440)
-    var leaderboardText = "Loading leaderboard..."
+    var leaderboardText = "Login to see the leaderboard!"
     
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
