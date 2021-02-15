@@ -1,10 +1,10 @@
 SERVER=keyrace.app
 
-all:
-
 keyrace-server: $(wildcard *.go)
 	go mod vendor || true
 	go build -o $@ $?
+
+server: keyrace-server keyrace-server-linux ## Build the server.
 
 keyrace-server-linux: $(wildcard *.go)
 	go mod vendor
@@ -13,14 +13,20 @@ keyrace-server-linux: $(wildcard *.go)
 	 -a -tags "$(BUILDTAGS) static_build netgo" \
 	 -installsuffix netgo -ldflags "-w -extldflags -static" $?;
 
-test: $(wildcard *.go)
+server-test: $(wildcard *.go)
 	sudo $(RM) $(TMPDIR)/keyrace.json /tmp/keyrace.json
 	@echo "Running the go tests..."
 	go mod vendor
 	go test $?
 
-deploy:
-	scp server.go root@$(SERVER):
+test: server-test ## Run the tests.
+
+deploy: keyrace-server-linux ## Deploy the server binary.
+	scp keyrace-server-linux $(SERVER):
 
 clean:
 	rm -rf keyrace.dSYM
+
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | sed 's/^[^:]*://g' | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
