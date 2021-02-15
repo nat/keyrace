@@ -3,7 +3,7 @@ SERVER=keyrace.app
 all:
 
 keyrace-server: $(wildcard *.go)
-	go mod vendor
+	go mod vendor || true
 	go build -o $@ $?
 
 keyrace-server-linux: $(wildcard *.go)
