@@ -1,0 +1,3 @@
+target 'keyrace-mac' do
+	pod 'Charts'
+end
