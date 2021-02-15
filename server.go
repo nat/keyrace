@@ -15,7 +15,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"text/tabwriter"
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -37,9 +36,16 @@ type Player struct {
 	Username          string
 	Token             string
 	Score             int
+	Follows           []string
+	FilterByFollows   bool
 	TimeLastCheckedIn time.Time
 	// We have a mutex here so we can update a player safely.
 	mu sync.Mutex
+}
+
+type PlayerScore struct {
+	Username string `json:"username"`
+	Score    int    `json:"score"`
 }
 
 // Len is part of sort.Interface.
@@ -113,6 +119,8 @@ func count(w http.ResponseWriter, req *http.Request) {
 		Username:          "",
 		Token:             ghToken,
 		Score:             count,
+		Follows:           []string{},
+		FilterByFollows:   false,
 		TimeLastCheckedIn: time.Now(),
 	}
 	current_player.setGitHubDataFromToken()
@@ -148,29 +156,28 @@ func count(w http.ResponseWriter, req *http.Request) {
 	scores.mu.Unlock()
 }
 
-func index(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.String(), getIP(req))
-
+func (p Player) getLeaderboard() []PlayerScore {
+	leaderboard := []PlayerScore{}
 	sort.Sort(byScore(scores.Players))
 
-	// Format left-aligned in tab-separated columns of minimal width 5
-	// and at least one blank of padding (so wider column entries do not
-	// touch each other).
-	t := new(tabwriter.Writer)
-	t.Init(w, 5, 0, 1, '\t', 0)
 	for index, player := range scores.Players {
 		// Check if the player has showed up "today".
 		// TODO(jess): We should probably sort out whatever timezone the server is running in
 		// in the future.
 		if isToday(player.TimeLastCheckedIn) {
-			fmt.Fprintf(w, "%s\t%d\t%s\n", player.Username, player.Score, humanTime(player.TimeLastCheckedIn))
+			leaderboard = append(leaderboard, PlayerScore{
+				Username: player.Username,
+				Score:    player.Score,
+			})
 		} else {
 			// Remove the player from the slice.
+			// Since it is not today.
 			scores.Players = removeFromSlice(scores.Players, index)
 
 		}
 	}
-	t.Flush()
+
+	return leaderboard
 }
 
 func removeFromSlice(slice []Player, index int) []Player {
@@ -302,8 +309,32 @@ type GitHubUser struct {
 }
 
 func (p *Player) setGitHubDataFromToken() {
-	// Create a new request using http
-	req, err := http.NewRequest("GET", "https://api.github.com/user", nil)
+	resp := p.doGitHubCall("user")
+	var user GitHubUser
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		log.Println("decoding the response from the github api failed.\n[ERRO] -", err)
+	}
+
+	// Set the username.
+	p.Username = user.Login
+
+	// Get who the user follows.
+	resp = p.doGitHubCall("user/following")
+	var users []GitHubUser
+	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+		log.Println("decoding the response from the github api failed.\n[ERRO] -", err)
+	}
+
+	// Set the follows.
+	p.Follows = []string{}
+	for _, u := range users {
+		p.Follows = append(p.Follows, u.Login)
+	}
+
+}
+
+func (p Player) doGitHubCall(endpoint string) *http.Response {
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/%s", endpoint), nil)
 
 	// add authorization header to the req
 	req.Header.Add("Authorization", "token "+p.Token)
@@ -316,14 +347,7 @@ func (p *Player) setGitHubDataFromToken() {
 		log.Println("response from the github API errored\n[ERRO] -", err)
 	}
 
-	var user GitHubUser
-	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
-		log.Println("decoding the response from the github api failed.\n[ERRO] -", err)
-	}
-
-	// Set the username.
-	p.Username = user.Login
-
+	return resp
 }
 
 func main() {
@@ -351,7 +375,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/count", count)
-	mux.HandleFunc("/", index)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://github.com/nat/keyrace", 301)
+	})
 
 	// TODO: skip this if in DEV mode, maybe set an env variable.
 	// We need to generate the certificate.
