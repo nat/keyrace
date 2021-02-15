@@ -109,6 +109,9 @@ func count(w http.ResponseWriter, req *http.Request) {
 			}
 
 			// Return early.
+			// Print the user's leaderboard back out.
+			leaderboard := player.getLeaderboard()
+			fmt.Fprintf(w, "%s", leaderboard)
 			return
 		}
 	}
@@ -143,20 +146,26 @@ func count(w http.ResponseWriter, req *http.Request) {
 			scores.mu.Unlock()
 
 			// Return early.
+			// Print the user's leaderboard back out.
+			leaderboard := current_player.getLeaderboard()
+			fmt.Fprintf(w, "%s", leaderboard)
 			return
 		}
 	}
 
 	// If we could not find the matching player, we need to create one.
-	fmt.Fprintf(w, "updated count for %s from 0 to %d\n", current_player.Username, count)
+	fmt.Printf("updated count for %s from 0 to %d\n", current_player.Username, count)
 	// Lock the mutex while we update the count.
 	scores.mu.Lock()
 	scores.Players = append(scores.Players, current_player)
 	// Unlock the mutex since we are done updating.
 	scores.mu.Unlock()
+	// Print the user's leaderboard back out.
+	leaderboard := current_player.getLeaderboard()
+	fmt.Fprintf(w, "%s", leaderboard)
 }
 
-func (p Player) getLeaderboard() []PlayerScore {
+func (p Player) getLeaderboard() string {
 	leaderboard := []PlayerScore{}
 	sort.Sort(byScore(scores.Players))
 
@@ -177,7 +186,12 @@ func (p Player) getLeaderboard() []PlayerScore {
 		}
 	}
 
-	return leaderboard
+	str, err := json.Marshal(leaderboard)
+	if err != nil {
+		fmt.Printf("marshalling the leaderboard to JSON failed")
+	}
+
+	return string(str)
 }
 
 func removeFromSlice(slice []Player, index int) []Player {

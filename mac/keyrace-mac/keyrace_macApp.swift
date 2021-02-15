@@ -150,9 +150,20 @@ class KeyTap {
                     return
             }
 
-            let responseObject = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-            // FIXME
-            self.leaderboardText = "Fill this in with the leaderboard text"
+            
+            if let json_leaders = try? JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
+                self.leaderboardText = ""
+                for leader in json_leaders{
+                    if let username = leader["username"] as? String {
+                        self.leaderboardText += username + " "
+                    }
+                    if let score = leader["score"] as? Int {
+                        self.leaderboardText += String(format: "%d\n",score)
+                    }
+                }
+            }
+    
+           
         }
         task.resume()
     }
