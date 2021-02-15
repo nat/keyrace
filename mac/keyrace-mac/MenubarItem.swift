@@ -187,10 +187,10 @@ class MenubarItem : NSObject {
 
 extension MenubarItem : NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
-        print("Menu will open!")
-        
         // Update the bar chart
         (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getChart())!)
         (self.leaderboardItem.view as? NSTextView)?.string = (keyTap?.getLeaderboardText())!
+        
+        self.leaderboardItem.isHidden = true // FIXME why doesn't this work?
     }
 }
