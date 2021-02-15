@@ -18,7 +18,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	goaway "github.com/TwinProduction/go-away"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -198,11 +197,6 @@ func isToday(t time.Time) bool {
 func getStringParam(req *http.Request, key string) string {
 	keys, ok := req.URL.Query()[key]
 	if !ok || len(keys[0]) < 1 || len(keys[0]) >= 50 {
-		return ""
-	}
-	// Make sure it is not offensive.
-	if goaway.IsProfane(keys[0]) {
-		fmt.Println("[offensive]", req.URL.String(), getIP(req))
 		return ""
 	}
 	return keys[0]
