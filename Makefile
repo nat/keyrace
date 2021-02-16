@@ -1,20 +1,23 @@
 SERVER=keyrace.app
+BUILDTAGS=libsqlite3 sqlite_omit_load_extension
 
 keyrace-server: $(wildcard *.go)
 	go mod vendor || true
-	go build -o $@ $?
+	go build -o $@ \
+		-tags "$(BUILDTAGS)" $?
 
 server: keyrace-server keyrace-server-linux ## Build the server.
 
 keyrace-server-linux: $(wildcard *.go)
-	go mod vendor
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build \
-	 -o $@ \
-	 -a -tags "$(BUILDTAGS) static_build netgo" \
-	 -installsuffix netgo -ldflags "-w -extldflags -static" $?;
+	# On a mac you need to `brew install sqlite`
+	echo "Using sqlite broke the static binary building on macos"
+	#go mod vendor
+	#GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build \
+	# -o $@ \
+	# -tags "$(BUILDTAGS)" \
+	# -installsuffix netgo -ldflags "-w -extldflags" $?
 
 server-test: $(wildcard *.go)
-	sudo $(RM) $(TMPDIR)/keyrace.json /tmp/keyrace.json
 	@echo "Running the go tests..."
 	go mod vendor
 	go test $?
