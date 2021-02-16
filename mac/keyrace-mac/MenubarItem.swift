@@ -74,6 +74,10 @@ class TypingChart: BarChartView {
 }
 
 class MenubarItem : NSObject {
+    private var settingsMenuItem : NSMenuItem
+    private var settingsSubMenu : NSMenu
+    private var onlyShowFollows : NSMenuItem
+    
     private var loginMenuItem : NSMenuItem
     private var quitMenuItem : NSMenuItem
     private var barChartItem : NSMenuItem
@@ -97,6 +101,11 @@ class MenubarItem : NSObject {
     let statusBarMenu = NSMenu(title: "foo")
 
     init(title: String) {
+        settingsMenuItem = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
+        settingsSubMenu = NSMenu.init(title: "Settings")
+        settingsMenuItem.submenu = settingsSubMenu
+        onlyShowFollows = NSMenuItem(title: "Only show users I follow", action: #selector(onlyShowUsersIFollow), keyEquivalent: "")
+        
         loginMenuItem = NSMenuItem(title: "Login with GitHub", action: #selector(login), keyEquivalent: "")
         quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "")
         barChartItem = NSMenuItem()
@@ -116,10 +125,15 @@ class MenubarItem : NSObject {
         
         quitMenuItem.target = self
         loginMenuItem.target = self
+        
+        settingsMenuItem.target = self
+        onlyShowFollows.target = self
+        settingsSubMenu.addItem(onlyShowFollows)
 
         
         statusBarMenu.addItem(barChartItem)
         statusBarMenu.addItem(leaderboardItem)
+        statusBarMenu.addItem(settingsMenuItem)
         statusBarMenu.addItem(loginMenuItem)
         statusBarMenu.addItem(quitMenuItem)
         statusBarItem.menu = statusBarMenu
@@ -178,6 +192,21 @@ class MenubarItem : NSObject {
             }
         }
     }
+    
+    @objc func onlyShowUsersIFollow() {
+        // Toggle the state.
+        if (self.onlyShowFollows.state == NSControl.StateValue.off) {
+            // Set it to be on
+            self.onlyShowFollows.state = NSControl.StateValue.on
+        } else {
+            self.onlyShowFollows.state = NSControl.StateValue.off
+        }
+    
+        // Save the setting.
+        MenuSettings.setOnlyShowFollows(self.onlyShowFollows.state)
+        // Update the leaderboard.
+        self.keyTap?.uploadCount()
+    }
 
     @objc func quit() {
         print("quitting")
@@ -190,6 +219,8 @@ extension MenubarItem : NSMenuDelegate {
         // Update the bar chart
         (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getChart())!)
         (self.leaderboardItem.view as? NSTextView)?.string = (keyTap?.getLeaderboardText())!
+        
+        self.onlyShowFollows.state = MenuSettings.getOnlyShowFollows()
         
         self.leaderboardItem.isHidden = true // FIXME why doesn't this work?
     }

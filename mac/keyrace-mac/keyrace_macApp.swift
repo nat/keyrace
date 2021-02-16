@@ -138,6 +138,11 @@ class KeyTap {
         url.queryItems = [
             URLQueryItem(name: "count", value: "\(keycount)")
         ]
+        // Add the query to the URL if we are only supposed to show people they follow.
+        if MenuSettings.getOnlyShowFollows() == NSControl.StateValue.on {
+            url.queryItems?.append(URLQueryItem(name: "only_follows", value: "1"))
+        }
+        print(url.url!)
         var request = URLRequest(url: url.url!)
         request.addValue("Bearer \(appDelegate.gh!.token!)", forHTTPHeaderField: "Authorization")
         
