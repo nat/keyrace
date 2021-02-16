@@ -198,6 +198,8 @@ class KeyTap {
         CGEvent.tapEnable(tap: eventTap, enable: true)
 
         appDelegate.menubarItem!.statusBarItem.button?.title = formatCount(count: keycount)
+        
+        uploadCount()
     }
     
     func uploadCount () {

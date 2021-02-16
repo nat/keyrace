@@ -105,8 +105,8 @@ class MenubarItem : NSObject {
         settingsSubMenu = NSMenu.init(title: "Settings")
         settingsMenuItem.submenu = settingsSubMenu
         onlyShowFollows = NSMenuItem(title: "Only show users I follow", action: #selector(onlyShowUsersIFollow), keyEquivalent: "")
-        
         loginMenuItem = NSMenuItem(title: "Login with GitHub", action: #selector(login), keyEquivalent: "")
+        
         quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "")
         barChartItem = NSMenuItem()
         leaderboardItem = NSMenuItem()
@@ -120,6 +120,7 @@ class MenubarItem : NSObject {
 
         let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 200))
         leaderboard.string = ""
+        leaderboard.isRichText = true
         leaderboard.font = NSFont(name:"Helvetica Bold", size:12)
         leaderboardItem.view = leaderboard
         
@@ -129,13 +130,13 @@ class MenubarItem : NSObject {
         settingsMenuItem.target = self
         onlyShowFollows.target = self
         settingsSubMenu.addItem(onlyShowFollows)
+        settingsSubMenu.addItem(loginMenuItem)
+        settingsSubMenu.addItem(quitMenuItem)
 
         
         statusBarMenu.addItem(barChartItem)
         statusBarMenu.addItem(leaderboardItem)
         statusBarMenu.addItem(settingsMenuItem)
-        statusBarMenu.addItem(loginMenuItem)
-        statusBarMenu.addItem(quitMenuItem)
         statusBarItem.menu = statusBarMenu
         
         statusBarMenu.delegate = self
