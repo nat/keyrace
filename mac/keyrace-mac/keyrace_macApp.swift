@@ -83,7 +83,7 @@ class KeyTap {
     var keyTrapSetup = false
     var KEYRACE_HOST = "keyrace.app"
     var minutes = [Int](repeating:0, count:1440)
-    var leaderboardText = "Login to see the leaderboard!"
+    var leaderboardText = NSMutableAttributedString()
     
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
@@ -125,7 +125,7 @@ class KeyTap {
         return Array(minutes[currMin - 20...currMin])
     }
 
-    func getLeaderboardText() -> String {
+    func getLeaderboardText() -> NSMutableAttributedString {
         return leaderboardText
     }
     
@@ -138,6 +138,11 @@ class KeyTap {
         url.queryItems = [
             URLQueryItem(name: "count", value: "\(keycount)")
         ]
+        // Add the query to the URL if we are only supposed to show people they follow.
+        if MenuSettings.getOnlyShowFollows() == NSControl.StateValue.on {
+            url.queryItems?.append(URLQueryItem(name: "only_follows", value: "1"))
+        }
+        print(url.url!)
         var request = URLRequest(url: url.url!)
         request.addValue("Bearer \(appDelegate.gh!.token!)", forHTTPHeaderField: "Authorization")
         
@@ -152,15 +157,53 @@ class KeyTap {
 
             
             if let json_leaders = try? JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
-                self.leaderboardText = ""
-                for leader in json_leaders{
+                let title = "Leaderboard\n"
+                let attrTitle = NSMutableAttributedString(string: title)
+                attrTitle.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 14, weight: .bold) as Any, range: NSRange(location: 0, length: title.count))
+                self.leaderboardText = NSMutableAttributedString()
+                self.leaderboardText.append(attrTitle)
+                
+                // Add paragraph styling
+                let paragraphStyle = NSMutableParagraphStyle()
+                paragraphStyle.lineSpacing = 7
+                paragraphStyle.alignment = .justified
+                self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
+                
+                for (i, leader) in json_leaders.enumerated(){
+                    var u = ""
                     if let username = leader["username"] as? String {
-                        self.leaderboardText += username + " "
+                        u = username
                     }
+                    let fullUsername = "@" + u
+                    var s = ""
                     if let score = leader["score"] as? Int {
-                        self.leaderboardText += String(format: "%d\n",score)
+                        s = String(format: " \t %d", score)
+                        if u.count < 5 {
+                            // Add an extra tab for justication
+                            // FIXME: this is hokey...
+                          s = "\t"+s
+                        }
+                        if i == 0 {
+                            // They are the winner!
+                            s += " \t 🎉"
+                        }
+                        s += "\n"
                     }
+                    
+                    // Do the font styling for the line.
+                    let attrLine = NSMutableAttributedString(string: fullUsername + s)
+                    attrLine.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular), range: NSRange(location: 0, length: fullUsername.count + s.count))
+                    attrLine.addAttribute(.link,
+                                              value: NSURL(string: "https://github.com/"+u)!,
+                                              range: NSRange(location: 0, length: fullUsername.count))
+                    attrLine.addAttribute(.cursor,
+                                              value: NSCursor.pointingHand,
+                                              range: NSRange(location: 0, length: fullUsername.count))
+                    self.leaderboardText.append(attrLine)
                 }
+                
+                self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
+                self.leaderboardText.setAlignment(.justified, range: NSRange(location: 0, length: self.leaderboardText.length))
             }
     
            
@@ -193,6 +236,8 @@ class KeyTap {
         CGEvent.tapEnable(tap: eventTap, enable: true)
 
         appDelegate.menubarItem!.statusBarItem.button?.title = formatCount(count: keycount)
+        
+        uploadCount()
     }
     
     func uploadCount () {

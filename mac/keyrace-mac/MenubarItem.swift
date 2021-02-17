@@ -74,6 +74,10 @@ class TypingChart: BarChartView {
 }
 
 class MenubarItem : NSObject {
+    private var settingsMenuItem : NSMenuItem
+    private var settingsSubMenu : NSMenu
+    private var onlyShowFollows : NSMenuItem
+    
     private var loginMenuItem : NSMenuItem
     private var quitMenuItem : NSMenuItem
     private var barChartItem : NSMenuItem
@@ -97,7 +101,12 @@ class MenubarItem : NSObject {
     let statusBarMenu = NSMenu(title: "foo")
 
     init(title: String) {
+        settingsMenuItem = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
+        settingsSubMenu = NSMenu.init(title: "Settings")
+        settingsMenuItem.submenu = settingsSubMenu
+        onlyShowFollows = NSMenuItem(title: "Only show users I follow", action: #selector(onlyShowUsersIFollow), keyEquivalent: "")
         loginMenuItem = NSMenuItem(title: "Login with GitHub", action: #selector(login), keyEquivalent: "")
+        
         quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "")
         barChartItem = NSMenuItem()
         leaderboardItem = NSMenuItem()
@@ -109,19 +118,26 @@ class MenubarItem : NSObject {
         let barChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
         barChartItem.view = barChart
 
-        let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 200))
+        let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
         leaderboard.string = ""
-        leaderboard.font = NSFont(name:"Helvetica Bold", size:12)
+        leaderboard.isRichText = true
+        leaderboard.drawsBackground = false
+        leaderboard.textContainerInset = NSSizeFromString("10")
         leaderboardItem.view = leaderboard
         
         quitMenuItem.target = self
         loginMenuItem.target = self
+        
+        settingsMenuItem.target = self
+        onlyShowFollows.target = self
+        settingsSubMenu.addItem(onlyShowFollows)
+        settingsSubMenu.addItem(loginMenuItem)
+        settingsSubMenu.addItem(quitMenuItem)
 
         
         statusBarMenu.addItem(barChartItem)
         statusBarMenu.addItem(leaderboardItem)
-        statusBarMenu.addItem(loginMenuItem)
-        statusBarMenu.addItem(quitMenuItem)
+        statusBarMenu.addItem(settingsMenuItem)
         statusBarItem.menu = statusBarMenu
         
         statusBarMenu.delegate = self
@@ -178,6 +194,21 @@ class MenubarItem : NSObject {
             }
         }
     }
+    
+    @objc func onlyShowUsersIFollow() {
+        // Toggle the state.
+        if (self.onlyShowFollows.state == NSControl.StateValue.off) {
+            // Set it to be on
+            self.onlyShowFollows.state = NSControl.StateValue.on
+        } else {
+            self.onlyShowFollows.state = NSControl.StateValue.off
+        }
+    
+        // Save the setting.
+        MenuSettings.setOnlyShowFollows(self.onlyShowFollows.state)
+        // Update the leaderboard.
+        self.keyTap?.uploadCount()
+    }
 
     @objc func quit() {
         print("quitting")
@@ -189,7 +220,13 @@ extension MenubarItem : NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         // Update the bar chart
         (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getChart())!)
-        (self.leaderboardItem.view as? NSTextView)?.string = (keyTap?.getLeaderboardText())!
+        let leaderboardView = (self.leaderboardItem.view as? NSTextView)
+        let str = (keyTap?.getLeaderboardText())
+        leaderboardView!.performValidatedReplacement(
+            in: NSRange(location: 0, length: leaderboardView!.string.count),
+            with: str!)
+        
+        self.onlyShowFollows.state = MenuSettings.getOnlyShowFollows()
         
         self.leaderboardItem.isHidden = true // FIXME why doesn't this work?
     }

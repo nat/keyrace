@@ -160,7 +160,7 @@ func (p Player) getLeaderboard(onlyFollows bool) string {
 	leaderboard := []PlayerScore{}
 
 	// localtime depends on the localtime of the server.
-	query := `SELECT username,score FROM players WHERE date(last_updated,'localtime') = date('now','localtime') ORDER BY score DESC`
+	query := `SELECT username,score FROM players WHERE date(last_updated,'localtime') = date('now','localtime') ORDER BY score DESC LIMIT 20`
 	if onlyFollows {
 		// Make sure we get ourselves in the leaderboard as well.
 		filter := fmt.Sprintf("'%s'", p.Username)
@@ -168,7 +168,7 @@ func (p Player) getLeaderboard(onlyFollows bool) string {
 			filter += fmt.Sprintf(",'%s'", f)
 		}
 
-		query = fmt.Sprintf(`SELECT username,score FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND username IN (%s) ORDER BY score DESC`, filter)
+		query = fmt.Sprintf(`SELECT username,score FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND username IN (%s) ORDER BY score DESC LIMIT 20`, filter)
 	}
 	rows, err := db.Query(query)
 	if err != nil {
