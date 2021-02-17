@@ -118,10 +118,11 @@ class MenubarItem : NSObject {
         let barChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
         barChartItem.view = barChart
 
-        let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 200))
+        let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
         leaderboard.string = ""
         leaderboard.isRichText = true
-        leaderboard.font = NSFont(name:"Helvetica Bold", size:12)
+        leaderboard.drawsBackground = false
+        leaderboard.textContainerInset = NSSizeFromString("10")
         leaderboardItem.view = leaderboard
         
         quitMenuItem.target = self
@@ -219,7 +220,11 @@ extension MenubarItem : NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         // Update the bar chart
         (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getChart())!)
-        (self.leaderboardItem.view as? NSTextView)?.string = (keyTap?.getLeaderboardText())!
+        let leaderboardView = (self.leaderboardItem.view as? NSTextView)
+        let str = (keyTap?.getLeaderboardText())
+        leaderboardView!.performValidatedReplacement(
+            in: NSRange(location: 0, length: leaderboardView!.string.count),
+            with: str!)
         
         self.onlyShowFollows.state = MenuSettings.getOnlyShowFollows()
         

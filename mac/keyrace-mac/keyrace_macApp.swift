@@ -83,7 +83,7 @@ class KeyTap {
     var keyTrapSetup = false
     var KEYRACE_HOST = "keyrace.app"
     var minutes = [Int](repeating:0, count:1440)
-    var leaderboardText = "Login to see the leaderboard!"
+    var leaderboardText = NSMutableAttributedString()
     
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
@@ -125,7 +125,7 @@ class KeyTap {
         return Array(minutes[currMin - 20...currMin])
     }
 
-    func getLeaderboardText() -> String {
+    func getLeaderboardText() -> NSMutableAttributedString {
         return leaderboardText
     }
     
@@ -157,15 +157,48 @@ class KeyTap {
 
             
             if let json_leaders = try? JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
-                self.leaderboardText = ""
+                let title = "Leaderboard\n"
+                let attrTitle = NSMutableAttributedString(string: title)
+                attrTitle.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 14, weight: .bold) as Any, range: NSRange(location: 0, length: title.count))
+                self.leaderboardText = NSMutableAttributedString()
+                self.leaderboardText.append(attrTitle)
+                
+                // Add paragraph styling
+                let paragraphStyle = NSMutableParagraphStyle()
+                paragraphStyle.lineSpacing = 7
+                paragraphStyle.alignment = .justified
+                self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
+                
                 for leader in json_leaders{
+                    var u = ""
                     if let username = leader["username"] as? String {
-                        self.leaderboardText += username + " "
+                        u = username
                     }
+                    let fullUsername = "@" + u
+                    var s = ""
                     if let score = leader["score"] as? Int {
-                        self.leaderboardText += String(format: "%d\n",score)
+                        s = String(format: " \t %d\n", score)
+                        if u.count < 5 {
+                            // Add an extra tab for justication
+                            // FIXME: this is hokey...
+                          s = "\t"+s
+                        }
                     }
+                    
+                    // Do the font styling for the line.
+                    let attrLine = NSMutableAttributedString(string: fullUsername + s)
+                    attrLine.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular), range: NSRange(location: 0, length: fullUsername.count + s.count))
+                    attrLine.addAttribute(.link,
+                                              value: NSURL(string: "https://github.com/"+u)!,
+                                              range: NSRange(location: 0, length: fullUsername.count))
+                    attrLine.addAttribute(.cursor,
+                                              value: NSCursor.pointingHand,
+                                              range: NSRange(location: 0, length: fullUsername.count))
+                    self.leaderboardText.append(attrLine)
                 }
+                
+                self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
+                self.leaderboardText.setAlignment(.justified, range: NSRange(location: 0, length: self.leaderboardText.length))
             }
     
            
