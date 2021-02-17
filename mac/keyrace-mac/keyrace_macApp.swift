@@ -169,7 +169,7 @@ class KeyTap {
                 paragraphStyle.alignment = .justified
                 self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
                 
-                for leader in json_leaders{
+                for (i, leader) in json_leaders.enumerated(){
                     var u = ""
                     if let username = leader["username"] as? String {
                         u = username
@@ -177,12 +177,17 @@ class KeyTap {
                     let fullUsername = "@" + u
                     var s = ""
                     if let score = leader["score"] as? Int {
-                        s = String(format: " \t %d\n", score)
+                        s = String(format: " \t %d", score)
                         if u.count < 5 {
                             // Add an extra tab for justication
                             // FIXME: this is hokey...
                           s = "\t"+s
                         }
+                        if i == 0 {
+                            // They are the winner!
+                            s += " \t 🎉"
+                        }
+                        s += "\n"
                     }
                     
                     // Do the font styling for the line.
