@@ -62,8 +62,11 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
     let keyTap = Unmanaged<KeyTap>.fromOpaque(refcon!).takeUnretainedValue()
 
     if [.keyDown].contains(type) {
-
-        keyTap.increment()
+        var char = UniChar()
+        var length = 0
+        event.keyboardGetUnicodeString(maxStringLength: 1, actualStringLength: &length, unicodeString: &char)
+        keyTap.increment(char)
+        
         keyTap.appDelegate.menubarItem?.statusBarItem.button?.title = formatCount(count: keyTap.keycount)
     }
 
@@ -83,21 +86,24 @@ class KeyTap {
     var keyTrapSetup = false
     var KEYRACE_HOST = "keyrace.app"
     var minutes = [Int](repeating:0, count:1440)
+    var keys = [Int](repeating: 0, count:256)
     var leaderboardText = NSMutableAttributedString()
     
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
     }
     
-    func increment() {
+    func increment(_ keyCode: UInt16) {
         let date = Date()
         let calendar = Calendar.current
-
+        
         // Reset to 0 at midnight
         let day = calendar.component(.day, from:date)
         if (lastDay != day) {
             lastDay = day
             keycount = 0
+            minutes = [Int](repeating:0, count:1440)
+            keys = [Int](repeating:0, count:100)
         }
         
         keycount += 1
@@ -105,6 +111,10 @@ class KeyTap {
         let hour = calendar.component(.hour, from: date)
         let minute = calendar.component(.minute, from: date)
         minutes[hour*60 + minute] += 1
+        
+        print(keyCode)
+
+        keys[Int(keyCode)] += 1
 
         // Upload every minute
         if (lastMin != minute) {
@@ -115,7 +125,7 @@ class KeyTap {
         saveCount()
     }
     
-    func getChart() -> [Int] {
+    func getMinutesChart() -> [Int] {
         // Return the last 20 minutes minutely
         let date = Date()
         let calendar = Calendar.current
@@ -123,6 +133,11 @@ class KeyTap {
         let min = calendar.component(.minute, from: date)
         let currMin = hour*60 + min
         return Array(minutes[currMin - 20...currMin])
+    }
+    
+    func getKeysChart() -> [Int] {
+        // Return the last 20 minutes minutely
+        return Array(keys[97...97+26])
     }
 
     func getLeaderboardText() -> NSMutableAttributedString {
@@ -266,6 +281,16 @@ class KeyTap {
             // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
         }
 
+        filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.histogram.tmp")
+        let keyStrings = keys.map({ String($0) })
+        str = keyStrings.joined(separator: ",")
+        do {
+            try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
+        } catch {
+            NSLog("Could not write histogram to \(filename.path)")
+            // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
+        }
+
     }
     
     func loadCount() {
@@ -300,6 +325,21 @@ class KeyTap {
                 let str = try String(contentsOf: filename, encoding: .utf8)
                 let minStr = str.split(separator: ",")
                 minutes = minStr.map { x in return Int(x) ?? 0 }
+            }
+        } catch { }
+
+        // Load the key histogram
+        filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.histogram.tmp")
+        do {
+            let attr = try FileManager.default.attributesOfItem(atPath: filename.path)
+            let mtime = attr[FileAttributeKey.modificationDate] as! Date
+            let lastDay = calendar.component(.day, from:mtime)
+            let lastMonth = calendar.component(.month, from:mtime)
+
+            if (lastDay == day && lastMonth == month) {
+                let str = try String(contentsOf: filename, encoding: .utf8)
+                let keyStr = str.split(separator: ",")
+                keys = keyStr.map { x in return Int(x) ?? 0 }
             }
         } catch { }
 

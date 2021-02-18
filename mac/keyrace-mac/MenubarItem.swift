@@ -23,13 +23,17 @@ class ChartValueFormatter: NSObject, IValueFormatter {
 
 class TypingChart: BarChartView {
     
-    func NewData(_ typingCount: [Int]) {
+    func SetColor(r: Int, g: Int, b: Int) {
+        
+    }
+    
+    func NewData(_ typingCount: [Int], color: [Int] = [255, 255, 0]) {
         
         let yse1 = typingCount.enumerated().map { x, y in return BarChartDataEntry(x: Double(x), y: Double(y)) }
 
         let data = BarChartData()
         let ds1 = BarChartDataSet(entries: yse1, label: "Hello")
-        ds1.colors = [NSUIColor.init(srgbRed: 255.0/255.0, green: 255.0/255.0, blue: 0.0/255.0, alpha: 1.0)]
+        ds1.colors = [NSUIColor.init(srgbRed: CGFloat(color[0])/255.0, green: CGFloat(color[1])/255.0, blue: CGFloat(color[2])/255.0, alpha: 1.0)]
         data.addDataSet(ds1)
         data.barWidth = Double(0.5)
         data.setDrawValues(true)
@@ -81,6 +85,7 @@ class MenubarItem : NSObject {
     private var loginMenuItem : NSMenuItem
     private var quitMenuItem : NSMenuItem
     private var barChartItem : NSMenuItem
+    private var keyChartItem : NSMenuItem
     private var leaderboardItem : NSMenuItem
     
     var gh : GitHub? {
@@ -109,6 +114,7 @@ class MenubarItem : NSObject {
         
         quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "")
         barChartItem = NSMenuItem()
+        keyChartItem = NSMenuItem()
         leaderboardItem = NSMenuItem()
 
         super.init()
@@ -117,6 +123,8 @@ class MenubarItem : NSObject {
 
         let barChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
         barChartItem.view = barChart
+        let keyChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
+        keyChartItem.view = keyChart
 
         let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
         leaderboard.string = ""
@@ -136,6 +144,7 @@ class MenubarItem : NSObject {
 
         
         statusBarMenu.addItem(barChartItem)
+        statusBarMenu.addItem(keyChartItem)
         statusBarMenu.addItem(leaderboardItem)
         statusBarMenu.addItem(settingsMenuItem)
         statusBarItem.menu = statusBarMenu
@@ -219,7 +228,8 @@ class MenubarItem : NSObject {
 extension MenubarItem : NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         // Update the bar chart
-        (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getChart())!)
+        (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getMinutesChart())!)
+        (self.keyChartItem.view as? TypingChart)?.NewData((keyTap?.getKeysChart())!, color: [0, 255, 255])
         let leaderboardView = (self.leaderboardItem.view as? NSTextView)
         let str = (keyTap?.getLeaderboardText())
         leaderboardView!.performValidatedReplacement(
