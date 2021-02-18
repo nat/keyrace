@@ -103,7 +103,7 @@ class KeyTap {
             lastDay = day
             keycount = 0
             minutes = [Int](repeating:0, count:1440)
-            keys = [Int](repeating:0, count:100)
+            keys = [Int](repeating:0, count:256)
         }
         
         keycount += 1
