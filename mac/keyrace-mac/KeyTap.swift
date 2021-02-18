@@ -90,7 +90,11 @@ class KeyTap {
         let minute = calendar.component(.minute, from: date)
         minutes[hour*60 + minute] += 1
 
-        keys[Int(keyCode)] += 1
+        if keys.indices.contains(Int(keyCode)) {
+            keys[Int(keyCode)] += 1
+        } else {
+            keys[Int(keyCode)] = 0
+        }
 
         // Upload every minute
         if (lastMin != minute) {
