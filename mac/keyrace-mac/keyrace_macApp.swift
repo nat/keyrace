@@ -15,16 +15,16 @@ import Foundation
 import Accessibility
 import Cocoa
 
-@available(OSX 11.0, *)
-@main
-struct MenuBarPopoverApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    var body: some Scene {
-        Settings{
-            EmptyView()
-        }
-    }
-}
+//@available(OSX 11.0, *)
+//@main
+//struct MenuBarPopoverApp: App {
+//    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+//    var body: some Scene {
+//        Settings{
+//            EmptyView()
+//        }
+//    }
+//}
 
 func formatCount(count: Int) -> String {
     var str = ""
@@ -376,6 +376,7 @@ class KeyTap {
     }
 }
 
+@NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusBarItem: NSStatusItem!
     var menubarItem: MenubarItem?
@@ -396,4 +397,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
+}
+
+class NatApplication: NSApplication {
+
+    let strongDelegate = AppDelegate()
+
+    override init() {
+        super.init()
+        self.delegate = strongDelegate
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
 }
