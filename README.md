@@ -5,9 +5,9 @@ Daily multiplayer keyboard races for macos
 
 To install:
 ```bash
+git clone https://github.com/nat/keyrace.git
 cd mac
-pod install
 open keyrace-mac.xcworkspace
 ```
 
-Build and run in Xcode!
+Cmd-R or Product > Run in Xcode!
