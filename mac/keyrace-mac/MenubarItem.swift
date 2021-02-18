@@ -21,6 +21,39 @@ class ChartValueFormatter: NSObject, IValueFormatter {
     }
 }
 
+public class MinAxisValueFormatter: NSObject, IAxisValueFormatter {
+    public func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+        let date = Date()
+        let calendar = Calendar.current
+        let min = calendar.component(.minute, from: date)
+        
+        var m = min - 20 + Int(value)
+        if m < 0 {
+            m += 60
+        }
+        
+        return String(format: ":%02d", m)
+    }
+}
+
+public class HourAxisValueFormatter: NSObject, IAxisValueFormatter {
+    public func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+        if (value == 12.0) {
+            return "noon"
+        }
+
+        var str = "\(Int(value)%12)"
+        
+        if (value < 12.0) {
+            str += "am"
+        } else {
+            str += "pm"
+        }
+        
+        return str
+    }
+}
+
 public class KeyAxisValueFormatter: NSObject, IAxisValueFormatter {
     public func stringForValue(_ value: Double, axis: AxisBase?) -> String {
         return "\(Character(UnicodeScalar(Int(97 + value))!))"
@@ -28,10 +61,6 @@ public class KeyAxisValueFormatter: NSObject, IAxisValueFormatter {
 }
 
 class TypingChart: BarChartView {
-    
-    func SetColor(r: Int, g: Int, b: Int) {
-        
-    }
     
     func NewData(_ typingCount: [Int], color: [Int] = [255, 255, 0]) {
         
@@ -42,10 +71,11 @@ class TypingChart: BarChartView {
         ds1.colors = [NSUIColor.init(srgbRed: CGFloat(color[0])/255.0, green: CGFloat(color[1])/255.0, blue: CGFloat(color[2])/255.0, alpha: 1.0)]
         data.addDataSet(ds1)
         data.barWidth = Double(0.5)
-//        data.setDrawValues(true)
-//        let valueFormatter = ChartValueFormatter()
-//        data.setValueFormatter(valueFormatter)
-        
+
+        data.setDrawValues(true)
+        let valueFormatter = ChartValueFormatter()
+        data.setValueFormatter(valueFormatter)
+
         self.data = data
     }
     
@@ -90,7 +120,8 @@ class MenubarItem : NSObject {
     
     private var loginMenuItem : NSMenuItem
     private var quitMenuItem : NSMenuItem
-    private var barChartItem : NSMenuItem
+    private var minChartItem : NSMenuItem
+    private var hourChartItem : NSMenuItem
     private var keyChartItem : NSMenuItem
     private var leaderboardItem : NSMenuItem
     
@@ -119,7 +150,8 @@ class MenubarItem : NSObject {
         loginMenuItem = NSMenuItem(title: "Login with GitHub", action: #selector(login), keyEquivalent: "")
         
         quitMenuItem = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "")
-        barChartItem = NSMenuItem()
+        minChartItem = NSMenuItem()
+        hourChartItem = NSMenuItem()
         keyChartItem = NSMenuItem()
         leaderboardItem = NSMenuItem()
 
@@ -127,10 +159,24 @@ class MenubarItem : NSObject {
 
         statusBarItem.button?.title = title
 
-        let barChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
-        barChartItem.view = barChart
+        let minChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
+        minChartItem.view = minChart
+        let hourChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
+        hourChartItem.view = hourChart
         let keyChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
         keyChartItem.view = keyChart
+
+        minChart.xAxis.labelPosition = .bottom
+        minChart.xAxis.labelFont = .systemFont(ofSize: 8.0)
+        minChart.xAxis.granularity = 3
+        minChart.xAxis.valueFormatter = MinAxisValueFormatter()
+        minChart.xAxis.drawLabelsEnabled = true
+
+        hourChart.xAxis.labelPosition = .bottom
+        hourChart.xAxis.labelFont = .systemFont(ofSize: 8.0)
+        hourChart.xAxis.granularity = 3
+        hourChart.xAxis.valueFormatter = HourAxisValueFormatter()
+        hourChart.xAxis.drawLabelsEnabled = true
 
         keyChart.xAxis.labelPosition = .bottom
         keyChart.xAxis.labelFont = .systemFont(ofSize: 8.0)
@@ -139,6 +185,7 @@ class MenubarItem : NSObject {
         keyChart.xAxis.valueFormatter = KeyAxisValueFormatter()
         keyChart.xAxis.drawLabelsEnabled = true
         
+
         let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
         leaderboard.string = ""
         leaderboard.isRichText = true
@@ -155,9 +202,12 @@ class MenubarItem : NSObject {
         settingsSubMenu.addItem(loginMenuItem)
         settingsSubMenu.addItem(quitMenuItem)
 
-        
-        statusBarMenu.addItem(barChartItem)
+        statusBarMenu.addItem(minChartItem)
+        statusBarMenu.addItem(NSMenuItem.separator())
+        statusBarMenu.addItem(hourChartItem)
+        statusBarMenu.addItem(NSMenuItem.separator())
         statusBarMenu.addItem(keyChartItem)
+        statusBarMenu.addItem(NSMenuItem.separator())
         statusBarMenu.addItem(leaderboardItem)
         statusBarMenu.addItem(settingsMenuItem)
         statusBarItem.menu = statusBarMenu
@@ -241,7 +291,8 @@ class MenubarItem : NSObject {
 extension MenubarItem : NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         // Update the bar chart
-        (self.barChartItem.view as? TypingChart)?.NewData((keyTap?.getMinutesChart())!)
+        (self.minChartItem.view as? TypingChart)?.NewData((keyTap?.getMinutesChart())!)
+        (self.hourChartItem.view as? TypingChart)?.NewData((keyTap?.getHoursChart())!, color: [255, 0, 0])
         (self.keyChartItem.view as? TypingChart)?.NewData((keyTap?.getKeysChart())!, color: [0, 255, 255])
         let leaderboardView = (self.leaderboardItem.view as? NSTextView)
         let str = (keyTap?.getLeaderboardText())

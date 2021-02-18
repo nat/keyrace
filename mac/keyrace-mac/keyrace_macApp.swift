@@ -132,7 +132,17 @@ class KeyTap {
         let currMin = hour*60 + min
         return Array(minutes[currMin - 20...currMin])
     }
-    
+
+    func getHoursChart() -> [Int] {
+        var hours = [Int](repeating: 0, count: 24)
+
+        for i in 0..<minutes.count {
+            hours[i/60] += minutes[i]
+        }
+        
+        return hours
+    }
+
     func getKeysChart() -> [Int] {
         // Return the last 20 minutes minutely
         return Array(keys[97...97+25])
