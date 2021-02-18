@@ -15,17 +15,6 @@ import Foundation
 import Accessibility
 import Cocoa
 
-//@available(OSX 11.0, *)
-//@main
-//struct MenuBarPopoverApp: App {
-//    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-//    var body: some Scene {
-//        Settings{
-//            EmptyView()
-//        }
-//    }
-//}
-
 func formatCount(count: Int) -> String {
     var str = ""
 
