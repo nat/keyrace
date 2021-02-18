@@ -112,7 +112,6 @@ class GitHub {
         req.httpMethod = "GET"
         let (data, response, error) = URLSession.shared.performSynchronously(request: req)
         if (error == nil), data != nil, let response = response as? HTTPURLResponse, response.statusCode == 200 {
-            let str = String(data: data!, encoding: .utf8)
             if let json = try? JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any] {
                 if let login = json["login"] as? String {
                     username = login
