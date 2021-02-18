@@ -3,28 +3,30 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4137815825A19C3A004AD04D /* keyrace_macApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137815725A19C3A004AD04D /* keyrace_macApp.swift */; };
+		4137815825A19C3A004AD04D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137815725A19C3A004AD04D /* AppDelegate.swift */; };
 		4137815C25A19C3B004AD04D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815B25A19C3B004AD04D /* Assets.xcassets */; };
 		4137815F25A19C3B004AD04D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815E25A19C3B004AD04D /* Preview Assets.xcassets */; };
-		4137816B25A1A9CF004AD04D /* github_auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137816A25A1A9CF004AD04D /* github_auth.swift */; };
+		4137816B25A1A9CF004AD04D /* GitHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137816A25A1A9CF004AD04D /* GitHub.swift */; };
 		4137817425A2289B004AD04D /* MenubarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137817325A2289B004AD04D /* MenubarItem.swift */; };
+		4D39145A25DEB6B900F70170 /* KeyTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D39145925DEB6B900F70170 /* KeyTap.swift */; };
 		6B8B0D3B6D788EB8DF76B1B0 /* Pods_keyrace_mac.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAEA1BAC8E02E82DEC480300 /* Pods_keyrace_mac.framework */; };
 		C8F2DC5F25DC742900502D4E /* MenuSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F2DC5E25DC742900502D4E /* MenuSettings.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		103D5CE5A38C840CB5D3C88E /* Pods-keyrace-mac.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-keyrace-mac.debug.xcconfig"; path = "Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac.debug.xcconfig"; sourceTree = "<group>"; };
-		4137815725A19C3A004AD04D /* keyrace_macApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = keyrace_macApp.swift; sourceTree = "<group>"; };
+		4137815725A19C3A004AD04D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		4137815B25A19C3B004AD04D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4137815E25A19C3B004AD04D /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		4137816025A19C3B004AD04D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4137816125A19C3B004AD04D /* keyrace_mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = keyrace_mac.entitlements; sourceTree = "<group>"; };
-		4137816A25A1A9CF004AD04D /* github_auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = github_auth.swift; sourceTree = "<group>"; };
+		4137816A25A1A9CF004AD04D /* GitHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHub.swift; sourceTree = "<group>"; };
 		4137817325A2289B004AD04D /* MenubarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenubarItem.swift; sourceTree = "<group>"; };
+		4D39145925DEB6B900F70170 /* KeyTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyTap.swift; sourceTree = "<group>"; };
 		5DFFC29E2F953C16F277CF7F /* Pods-keyrace-mac.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-keyrace-mac.release.xcconfig"; path = "Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac.release.xcconfig"; sourceTree = "<group>"; };
 		C8F2DC5A25DB4BDD00502D4E /* keyrace-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "keyrace-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C8F2DC5E25DC742900502D4E /* MenuSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuSettings.swift; sourceTree = "<group>"; };
@@ -65,8 +67,9 @@
 		4137815625A19C3A004AD04D /* keyrace-mac */ = {
 			isa = PBXGroup;
 			children = (
-				4137815725A19C3A004AD04D /* keyrace_macApp.swift */,
-				4137816A25A1A9CF004AD04D /* github_auth.swift */,
+				4137815725A19C3A004AD04D /* AppDelegate.swift */,
+				4D39145925DEB6B900F70170 /* KeyTap.swift */,
+				4137816A25A1A9CF004AD04D /* GitHub.swift */,
 				4137817325A2289B004AD04D /* MenubarItem.swift */,
 				C8F2DC5E25DC742900502D4E /* MenuSettings.swift */,
 				4137815B25A19C3B004AD04D /* Assets.xcassets */,
@@ -122,7 +125,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1230;
-				LastUpgradeCheck = 1230;
+				LastUpgradeCheck = 1240;
 				TargetAttributes = {
 					4137815325A19C3A004AD04D = {
 						CreatedOnToolsVersion = 12.3;
@@ -206,10 +209,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4137816B25A1A9CF004AD04D /* github_auth.swift in Sources */,
+				4137816B25A1A9CF004AD04D /* GitHub.swift in Sources */,
+				4D39145A25DEB6B900F70170 /* KeyTap.swift in Sources */,
 				4137817425A2289B004AD04D /* MenubarItem.swift in Sources */,
 				C8F2DC5F25DC742900502D4E /* MenuSettings.swift in Sources */,
-				4137815825A19C3A004AD04D /* keyrace_macApp.swift in Sources */,
+				4137815825A19C3A004AD04D /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,6 +342,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "keyrace-mac/keyrace_mac.entitlements";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"keyrace-mac/Preview Content\"";
@@ -361,6 +366,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "keyrace-mac/keyrace_mac.entitlements";
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"keyrace-mac/Preview Content\"";
