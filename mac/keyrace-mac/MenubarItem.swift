@@ -21,6 +21,12 @@ class ChartValueFormatter: NSObject, IValueFormatter {
     }
 }
 
+public class KeyAxisValueFormatter: NSObject, IAxisValueFormatter {
+    public func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+        return "\(Character(UnicodeScalar(Int(97 + value))!))"
+    }
+}
+
 class TypingChart: BarChartView {
     
     func SetColor(r: Int, g: Int, b: Int) {
@@ -36,9 +42,9 @@ class TypingChart: BarChartView {
         ds1.colors = [NSUIColor.init(srgbRed: CGFloat(color[0])/255.0, green: CGFloat(color[1])/255.0, blue: CGFloat(color[2])/255.0, alpha: 1.0)]
         data.addDataSet(ds1)
         data.barWidth = Double(0.5)
-        data.setDrawValues(true)
-        let valueFormatter = ChartValueFormatter()
-        data.setValueFormatter(valueFormatter)
+//        data.setDrawValues(true)
+//        let valueFormatter = ChartValueFormatter()
+//        data.setValueFormatter(valueFormatter)
         
         self.data = data
     }
@@ -126,6 +132,13 @@ class MenubarItem : NSObject {
         let keyChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
         keyChartItem.view = keyChart
 
+        keyChart.xAxis.labelPosition = .bottom
+        keyChart.xAxis.labelFont = .systemFont(ofSize: 8.0)
+        keyChart.xAxis.labelCount = 25
+        keyChart.xAxis.granularity = 1
+        keyChart.xAxis.valueFormatter = KeyAxisValueFormatter()
+        keyChart.xAxis.drawLabelsEnabled = true
+        
         let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
         leaderboard.string = ""
         leaderboard.isRichText = true

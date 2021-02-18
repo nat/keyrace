@@ -111,8 +111,6 @@ class KeyTap {
         let hour = calendar.component(.hour, from: date)
         let minute = calendar.component(.minute, from: date)
         minutes[hour*60 + minute] += 1
-        
-        print(keyCode)
 
         keys[Int(keyCode)] += 1
 
@@ -137,7 +135,7 @@ class KeyTap {
     
     func getKeysChart() -> [Int] {
         // Return the last 20 minutes minutely
-        return Array(keys[97...97+26])
+        return Array(keys[97...97+25])
     }
 
     func getLeaderboardText() -> NSMutableAttributedString {
@@ -157,7 +155,7 @@ class KeyTap {
         if MenuSettings.getOnlyShowFollows() == NSControl.StateValue.on {
             url.queryItems?.append(URLQueryItem(name: "only_follows", value: "1"))
         }
-        print(url.url!)
+
         var request = URLRequest(url: url.url!)
         request.addValue("Bearer \(appDelegate.gh!.token!)", forHTTPHeaderField: "Authorization")
         
@@ -256,7 +254,6 @@ class KeyTap {
     }
     
     func uploadCount () {
-        print("Uploading count \(keycount) now...")
         uploadKeycount()
     }
     
