@@ -239,21 +239,23 @@ class KeyTap {
                         let attachmentCell: NSTextAttachmentCell = NSTextAttachmentCell.init(imageCell: circleAvatar)
                         attachment.attachmentCell = attachmentCell
                         attrImage = NSMutableAttributedString(attributedString: NSAttributedString(attachment: attachment))
-                        attrImage.addAttribute(.baselineOffset, value: -5, range: .init(location: 0, length: 1))
+                        attrImage.addAttribute(.baselineOffset, value: -6, range: .init(location: 0, length: 1))
+                        attrImage.addAttribute(.link,
+                                              value: NSURL(string: "https://github.com/"+player.username)!,
+                                                  range: .init(location: 0, length: 1))
                     }
                 }
                 
                 // Do the font styling for the line.
                 let attrLine = NSMutableAttributedString(string: fullUsername + score)
                 attrLine.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular), range: NSRange(location: 0, length: fullUsername.count + score.count))
+                let usernameRange = NSRange(location: 4, length: (fullUsername.count - 4))
                 attrLine.addAttribute(.link,
                                       value: NSURL(string: "https://github.com/"+player.username)!,
-                                          range: NSRange(location: 4, length: (fullUsername.count - 4)))
-                attrLine.addAttribute(.cursor,
-                                          value: NSCursor.pointingHand,
-                                          range: NSRange(location: 4, length: (fullUsername.count - 4)))
+                                          range: usernameRange)
+                
                 // Add the image.
-                attrLine.replaceCharacters(in: NSRange(location: 0, length: 3), with: attrImage)
+                attrLine.replaceCharacters(in: NSRange(location: 0, length: 2), with: attrImage)
                 self.leaderboardText.append(attrLine)
             }
             

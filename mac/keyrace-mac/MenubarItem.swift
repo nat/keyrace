@@ -207,6 +207,13 @@ class MenubarItem : NSObject {
         leaderboard.isRichText = true
         leaderboard.drawsBackground = false
         leaderboard.textContainerInset = NSSizeFromString("10")
+        let linkAttributes : [NSAttributedString.Key : Any] = [
+            .foregroundColor: NSColor.blue,
+            .font: NSFont.monospacedSystemFont(ofSize: 12, weight: .bold),
+            .underlineStyle:  0,
+            .cursor:NSCursor.pointingHand,
+        ]
+        leaderboard.linkTextAttributes = linkAttributes
         leaderboardItem.view = leaderboard
         
         quitMenuItem.target = self
