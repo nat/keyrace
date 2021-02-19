@@ -1,4 +1,4 @@
-// Created by Thomas Dohmke on 2/19/21.
+// Created by Nat Friedman on 1/2/21.
 
 import Foundation
 import Accessibility
