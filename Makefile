@@ -19,13 +19,13 @@ keyrace-server-linux: $(wildcard *.go)
 
 keyrace-mac:
 	set -eo pipefail
-	mkdir -p build
+	mkdir -p build/mac
 	xcodebuild \
 		-workspace mac/keyrace-mac.xcworkspace/ \
 		-scheme keyrace-mac \
 		-archivePath $(PWD)/build/keyrace.xcarchive \
 		clean archive
-	cp -r build/keyrace.xcarchive/Products/Applications/keyrace-mac.app build
+	cp -r build/keyrace.xcarchive/Products/Applications/keyrace-mac.app build/mac
 	
 server-test: $(wildcard *.go)
 	@echo "Running the go tests..."
