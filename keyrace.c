@@ -1,3 +1,5 @@
+// NOTE: This client no longer works. Run the native mac client instead!
+//
 // gcc keyrace.c -o keyrace -framework ApplicationServices -framework Carbon -Wall -g
 //
 // To start tracking, run as: keyrace <username> <team>

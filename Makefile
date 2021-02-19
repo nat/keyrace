@@ -1,37 +1,35 @@
-CC=gcc
-CFLAGS=-framework ApplicationServices -framework Carbon -Wall -g
-SERVER=159.89.136.69
-
-all: keyrace
-
-keyrace: keyrace.c
-	gcc keyrace.c $(CFLAGS) -o keyrace
+SERVER=keyrace.app
+BUILDTAGS=libsqlite3 sqlite_omit_load_extension
 
 keyrace-server: $(wildcard *.go)
-	go build -o $@ $?
+	go mod vendor || true
+	go build -o $@ \
+		-tags "$(BUILDTAGS)" $?
 
-test: $(wildcard *.go)
-	sudo $(RM) $(TMPDIR)/keyrace.json /tmp/keyrace.json
+server: keyrace-server keyrace-server-linux ## Build the server.
+
+keyrace-server-linux: $(wildcard *.go)
+	# On a mac you need to `brew install sqlite`
+	echo "Using sqlite broke the static binary building on macos"
+	#go mod vendor
+	#GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build \
+	# -o $@ \
+	# -tags "$(BUILDTAGS)" \
+	# -installsuffix netgo -ldflags "-w -extldflags" $?
+
+server-test: $(wildcard *.go)
 	@echo "Running the go tests..."
 	go mod vendor
 	go test $?
-	@echo "Running the integration tests..."
-	$(CURDIR)/integration-test.sh
 
-deploy:
-	scp server.go root@$(SERVER):
+test: server-test ## Run the tests.
+
+deploy: keyrace-server-linux ## Deploy the server binary.
+	scp keyrace-server-linux $(SERVER):
 
 clean:
-	rm -rf keyrace keyrace.dSYM
+	rm -rf keyrace.dSYM
 
-stop:
-	killall -9 keyrace
-
-install: install-agent install-bitbar
-
-install-bitbar:
-	brew cask install bitbar
-	mkdir -p ~/.bitbar
-	defaults write com.matryer.BitBar pluginsDirectory "~/.bitbar"
-	ln keyrace.1s.sh ~/.bitbar # hardlink, hopefully on the same filesystem
-	open /Applications/BitBar.app
+.PHONY: help
+help: ## Show this help.
+	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'

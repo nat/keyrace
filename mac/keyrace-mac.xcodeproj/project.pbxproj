@@ -1,0 +1,404 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4137815825A19C3A004AD04D /* keyrace_macApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137815725A19C3A004AD04D /* keyrace_macApp.swift */; };
+		4137815C25A19C3B004AD04D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815B25A19C3B004AD04D /* Assets.xcassets */; };
+		4137815F25A19C3B004AD04D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815E25A19C3B004AD04D /* Preview Assets.xcassets */; };
+		4137816B25A1A9CF004AD04D /* github_auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137816A25A1A9CF004AD04D /* github_auth.swift */; };
+		4137817425A2289B004AD04D /* MenubarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137817325A2289B004AD04D /* MenubarItem.swift */; };
+		6B8B0D3B6D788EB8DF76B1B0 /* Pods_keyrace_mac.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAEA1BAC8E02E82DEC480300 /* Pods_keyrace_mac.framework */; };
+		C8F2DC5F25DC742900502D4E /* MenuSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F2DC5E25DC742900502D4E /* MenuSettings.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		103D5CE5A38C840CB5D3C88E /* Pods-keyrace-mac.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-keyrace-mac.debug.xcconfig"; path = "Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac.debug.xcconfig"; sourceTree = "<group>"; };
+		4137815725A19C3A004AD04D /* keyrace_macApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = keyrace_macApp.swift; sourceTree = "<group>"; };
+		4137815B25A19C3B004AD04D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4137815E25A19C3B004AD04D /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		4137816025A19C3B004AD04D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4137816125A19C3B004AD04D /* keyrace_mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = keyrace_mac.entitlements; sourceTree = "<group>"; };
+		4137816A25A1A9CF004AD04D /* github_auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = github_auth.swift; sourceTree = "<group>"; };
+		4137817325A2289B004AD04D /* MenubarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenubarItem.swift; sourceTree = "<group>"; };
+		5DFFC29E2F953C16F277CF7F /* Pods-keyrace-mac.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-keyrace-mac.release.xcconfig"; path = "Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac.release.xcconfig"; sourceTree = "<group>"; };
+		C8F2DC5A25DB4BDD00502D4E /* keyrace-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "keyrace-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8F2DC5E25DC742900502D4E /* MenuSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuSettings.swift; sourceTree = "<group>"; };
+		FAEA1BAC8E02E82DEC480300 /* Pods_keyrace_mac.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_keyrace_mac.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4137815125A19C3A004AD04D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B8B0D3B6D788EB8DF76B1B0 /* Pods_keyrace_mac.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		25445D3A793350B261DE3920 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				103D5CE5A38C840CB5D3C88E /* Pods-keyrace-mac.debug.xcconfig */,
+				5DFFC29E2F953C16F277CF7F /* Pods-keyrace-mac.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		4137814B25A19C3A004AD04D = {
+			isa = PBXGroup;
+			children = (
+				4137815625A19C3A004AD04D /* keyrace-mac */,
+				25445D3A793350B261DE3920 /* Pods */,
+				D2C6C3213E73F95725FE9429 /* Frameworks */,
+				C8F2DC5A25DB4BDD00502D4E /* keyrace-mac.app */,
+			);
+			sourceTree = "<group>";
+		};
+		4137815625A19C3A004AD04D /* keyrace-mac */ = {
+			isa = PBXGroup;
+			children = (
+				4137815725A19C3A004AD04D /* keyrace_macApp.swift */,
+				4137816A25A1A9CF004AD04D /* github_auth.swift */,
+				4137817325A2289B004AD04D /* MenubarItem.swift */,
+				C8F2DC5E25DC742900502D4E /* MenuSettings.swift */,
+				4137815B25A19C3B004AD04D /* Assets.xcassets */,
+				4137816025A19C3B004AD04D /* Info.plist */,
+				4137816125A19C3B004AD04D /* keyrace_mac.entitlements */,
+				4137815D25A19C3B004AD04D /* Preview Content */,
+			);
+			path = "keyrace-mac";
+			sourceTree = "<group>";
+		};
+		4137815D25A19C3B004AD04D /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				4137815E25A19C3B004AD04D /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		D2C6C3213E73F95725FE9429 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FAEA1BAC8E02E82DEC480300 /* Pods_keyrace_mac.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4137815325A19C3A004AD04D /* keyrace-mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4137816425A19C3B004AD04D /* Build configuration list for PBXNativeTarget "keyrace-mac" */;
+			buildPhases = (
+				70AB7FEB63AFF33F2101D09C /* [CP] Check Pods Manifest.lock */,
+				4137815025A19C3A004AD04D /* Sources */,
+				4137815125A19C3A004AD04D /* Frameworks */,
+				4137815225A19C3A004AD04D /* Resources */,
+				F92F6671D7CE5BB4FB92FCCB /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "keyrace-mac";
+			productName = "keyrace-mac";
+			productReference = C8F2DC5A25DB4BDD00502D4E /* keyrace-mac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4137814C25A19C3A004AD04D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1230;
+				LastUpgradeCheck = 1230;
+				TargetAttributes = {
+					4137815325A19C3A004AD04D = {
+						CreatedOnToolsVersion = 12.3;
+					};
+				};
+			};
+			buildConfigurationList = 4137814F25A19C3A004AD04D /* Build configuration list for PBXProject "keyrace-mac" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4137814B25A19C3A004AD04D;
+			productRefGroup = 4137814B25A19C3A004AD04D;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4137815325A19C3A004AD04D /* keyrace-mac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4137815225A19C3A004AD04D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4137815F25A19C3B004AD04D /* Preview Assets.xcassets in Resources */,
+				4137815C25A19C3B004AD04D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		70AB7FEB63AFF33F2101D09C /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-keyrace-mac-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F92F6671D7CE5BB4FB92FCCB /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4137815025A19C3A004AD04D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4137816B25A1A9CF004AD04D /* github_auth.swift in Sources */,
+				4137817425A2289B004AD04D /* MenubarItem.swift in Sources */,
+				C8F2DC5F25DC742900502D4E /* MenuSettings.swift in Sources */,
+				4137815825A19C3A004AD04D /* keyrace_macApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		4137816225A19C3B004AD04D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 11.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		4137816325A19C3B004AD04D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 11.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		4137816525A19C3B004AD04D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 103D5CE5A38C840CB5D3C88E /* Pods-keyrace-mac.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "keyrace-mac/keyrace_mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"keyrace-mac/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = "keyrace-mac/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.nat.keyrace;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		4137816625A19C3B004AD04D /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5DFFC29E2F953C16F277CF7F /* Pods-keyrace-mac.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "keyrace-mac/keyrace_mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_ASSET_PATHS = "\"keyrace-mac/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = "keyrace-mac/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.nat.keyrace;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4137814F25A19C3A004AD04D /* Build configuration list for PBXProject "keyrace-mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4137816225A19C3B004AD04D /* Debug */,
+				4137816325A19C3B004AD04D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4137816425A19C3B004AD04D /* Build configuration list for PBXNativeTarget "keyrace-mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4137816525A19C3B004AD04D /* Debug */,
+				4137816625A19C3B004AD04D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4137814C25A19C3A004AD04D /* Project object */;
+}

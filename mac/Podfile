@@ -1,0 +1,6 @@
+use_frameworks!
+inhibit_all_warnings!
+
+target 'keyrace-mac' do
+	pod 'Charts'
+end

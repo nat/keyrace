@@ -1,169 +1,214 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
-	"text/tabwriter"
 	"time"
 
-	goaway "github.com/TwinProduction/go-away"
+	http_logrus "github.com/improbable-eng/go-httpwares/logging/logrus"
+	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/acme/autocert"
 )
 
-var scoreboards map[string]*Team
+// Global variable for the database connection.
+var db *sql.DB
 
-type Team struct {
-	// We have a mutex here so we can add and update players safely.
-	mu      sync.Mutex
-	Players []Player
+type PlayerScore struct {
+	Username string `json:"username"`
+	Gravatar string `json:"gravatar"`
+	Score    int64  `json:"score"`
 }
-
-// byScore implements sort.Interface for []player based on
-// the score field.
-type byScore []Player
 
 type Player struct {
-	Name              string
-	Score             int
-	TimeLastCheckedIn time.Time
+	ID       int64    `json:"id"`
+	Username string   `json:"username"`
+	Gravatar string   `json:"gravatar"`
+	Token    string   `json:"token"`
+	Score    int64    `json:"score"`
+	Follows  []string `json:"follows"`
 }
 
-// Len is part of sort.Interface.
-func (s byScore) Len() int {
-	return len(s)
-}
+func (p *Player) upsertInDB() error {
+	tx, err := db.Begin()
+	if err != nil {
+		// Return early.
+		return fmt.Errorf("beginning transaction in db failed: %v", err)
+	}
 
-// Swap is part of sort.Interface.
-func (s byScore) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
+	// Create the statement.
+	var stmt *sql.Stmt
+	if len(p.Username) == 0 {
+		stmt, err = tx.Prepare(fmt.Sprintf(
+			`INSERT INTO players(token,score,last_updated)
+VALUES('%s',%d,datetime('now'))
+ON CONFLICT(token) DO UPDATE SET score=excluded.score, last_updated=excluded.last_updated`,
+			p.Token, p.Score))
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("upserting player with token %q in db failed: %v", p.Token, err)
+		}
+	} else {
+		// If we have a username, upsert that as well.
+		stmt, err = tx.Prepare(fmt.Sprintf(
+			`INSERT INTO players(token,username,gravatar,score,last_updated,follows)
+VALUES('%s','%s','%s',%d,datetime('now'),'%s')
+ON CONFLICT(username) DO UPDATE SET token=excluded.token, score=excluded.score, last_updated=excluded.last_updated, follows=excluded.follows, gravatar=excluded.gravatar`,
+			p.Token, p.Username, p.Gravatar, p.Score, strings.Join(p.Follows, ",")))
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("upserting player with token %q | username %q in db failed: %v", p.Token, p.Username, err)
+		}
+	}
+	defer stmt.Close()
 
-// Less is part of sort.Interface.
-func (s byScore) Less(i, j int) bool {
-	return s[i].Score > s[j].Score
+	// Execute the statement.
+	if _, err := stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("executing upsert player with token %q in db failed: %v", p.Token, err)
+	}
+
+	// Commit the transaction.
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("commiting the transaction for player with token %q in db failed: %v", p.Token, err)
+	}
+
+	// If we sucessfully updated the player and their username is still empty,
+	// let's get their data from the database.
+	if len(p.Username) == 0 {
+		var follows string
+		if err := db.QueryRow("SELECT id,username,follows,gravatar FROM players WHERE token=?", p.Token).Scan(&p.ID, &p.Username, &follows, &p.Gravatar); err != nil {
+			return fmt.Errorf("querying the db for player with token %q failed: %v", p.Token, err)
+		}
+
+		p.Follows = strings.Split(follows, ",")
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"username": p.Username,
+		"token":    p.Token,
+		"score":    p.Score,
+		"gravatar": p.Gravatar,
+	}).Info("updated player in database")
+	return nil
 }
 
 func count(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.String(), getIP(req))
+	ctxlogrus.Extract(req.Context()).Info("started request")
 
-	count, err := strconv.Atoi(req.URL.Query()["count"][0])
+	// Get the token from the authorization header.
+	ghToken := req.Header.Get("Authorization")
+	splitToken := strings.Split(ghToken, "Bearer ")
+	// Make sure we actually have a token.
+	if len(splitToken) <= 1 {
+		logrus.Warn("invalid GitHub token")
+		return
+	}
+	ghToken = splitToken[1]
+
+	count, err := strconv.ParseInt(req.URL.Query()["count"][0], 10, 64)
 	if err != nil {
-		fmt.Fprintf(w, "Errror parsing count")
+		logrus.Warnf("error parsing count: %v", err)
 		return
 	}
 
-	name := getStringParam(req, "name")
-	if len(name) == 0 {
-		fmt.Fprintln(w, "name must be greater than 0 and less than 50 characters long")
-		return
+	onlyFollows := false
+	onlyFollowsStr := req.URL.Query()["only_follows"]
+	if len(onlyFollowsStr) > 0 {
+		onlyFollows = true
 	}
 
-	teamName := getStringParam(req, "team")
-	if len(teamName) == 0 {
-		fmt.Fprintln(w, "team must be greater than 0 and less than 50 characters long")
-		return
+	// Create the player.
+	player := Player{
+		ID:       0,
+		Username: "",
+		Token:    ghToken,
+		Score:    count,
+		Follows:  []string{},
 	}
-
-	if _, ok := scoreboards[teamName]; !ok {
-		scoreboards[teamName] = &Team{}
-	}
-
-	scoreboard, ok := scoreboards[teamName]
-	if ok {
-		// Find the matching player.
-		for index, player := range scoreboard.Players {
-			if player.Name == name {
-				// Update the player and break the loop, returning early.
-				fmt.Fprintf(w, "updated count for %s from %d to %d\n", name, player.Score, count)
-				player.Score = count
-				player.TimeLastCheckedIn = time.Now()
-
-				// Lock the mutex while we update the count.
-				scoreboards[teamName].mu.Lock()
-				scoreboards[teamName].Players[index] = player
-				// Unlock the mutex since we are done updating.
-				scoreboards[teamName].mu.Unlock()
-
-				// Return early.
-				return
-			}
+	// Try to update the player in the database with just their token.
+	if err := player.upsertInDB(); err != nil {
+		// Let's get their username from GitHub since likely we
+		// didn't already have it in the database.
+		player.setGitHubDataFromToken()
+		if err := player.upsertInDB(); err != nil {
+			logrus.Warn(err)
+			return
 		}
-
-		// If we could not find the matching player, we need to create one.
-		fmt.Fprintf(w, "updated count for %s from 0 to %d\n", name, count)
-		// Lock the mutex while we update the count.
-		scoreboards[teamName].mu.Lock()
-		scoreboards[teamName].Players = append(scoreboards[teamName].Players, Player{
-			Name:              name,
-			Score:             count,
-			TimeLastCheckedIn: time.Now(),
-		})
-		// Unlock the mutex since we are done updating.
-		scoreboards[teamName].mu.Unlock()
 	}
+
+	// If they don't have a gravatar, try and get it.
+	if len(player.Gravatar) == 0 {
+		player.setGitHubDataFromToken()
+		player.upsertInDB()
+	}
+
+	// Make sure we have a Username, this should never be empty.
+	if len(player.Username) == 0 {
+		logrus.Warn("github username cannot be empty")
+		return
+	}
+
+	// Print the user's leaderboard back out.
+	leaderboard := player.getLeaderboard(onlyFollows)
+	fmt.Fprintf(w, "%s", leaderboard)
 }
 
-func index(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.String(), getIP(req))
+func (p Player) getLeaderboard(onlyFollows bool) string {
+	leaderboard := []PlayerScore{}
 
-	teamName := getStringParam(req, "team")
-	if len(teamName) == 0 {
-		fmt.Fprintln(w, "team must be greater than 0 and less than 50 characters long")
-		return
+	// localtime depends on the localtime of the server.
+	query := fmt.Sprintf(`SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND ( shadow_ban = 0 OR username = '%s') ORDER BY score DESC LIMIT 20`, p.Username)
+	if onlyFollows {
+		// Make sure we get ourselves in the leaderboard as well.
+		filter := ""
+		for _, f := range p.Follows {
+			filter += fmt.Sprintf(",'%s'", f)
+		}
+		filter = strings.TrimPrefix(filter, ",")
+
+		query = fmt.Sprintf(`SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND (( username IN (%s) AND shadow_ban = 0 ) OR username = '%s') ORDER BY score DESC LIMIT 20`, filter, p.Username)
 	}
+	rows, err := db.Query(query)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"query": query,
+		}).Warnf("querying the db for leaderboard for player with username %q failed: %v", p.Username, err)
+	}
+	defer rows.Close()
 
-	scoreboard := scoreboards[teamName]
+	for rows.Next() {
+		player := PlayerScore{}
+		if err := rows.Scan(&player.Username, &player.Score, &player.Gravatar); err != nil {
+			logrus.Warnf("failed to scan row for player for leaderboard: %v", err)
+		}
 
-	sort.Sort(byScore(scoreboard.Players))
-
-	// Format left-aligned in tab-separated columns of minimal width 5
-	// and at least one blank of padding (so wider column entries do not
-	// touch each other).
-	t := new(tabwriter.Writer)
-	t.Init(w, 5, 0, 1, '\t', 0)
-	for index, player := range scoreboard.Players {
-		// Check if the player has showed up "today".
-		// TODO(jess): We should probably sort out whatever timezone the server is running in
-		// in the future.
-		if isToday(player.TimeLastCheckedIn) {
-			fmt.Fprintf(w, "%s\t%d\t%s\n", player.Name, player.Score, humanTime(player.TimeLastCheckedIn))
-		} else {
-			// Remove the player from the slice.
-			scoreboards[teamName].Players = removeFromSlice(scoreboard.Players, index)
-
+		if len(player.Username) > 0 {
+			// Add it to our array.
+			leaderboard = append(leaderboard, player)
 		}
 	}
-	t.Flush()
+
+	str, err := json.Marshal(leaderboard)
+	if err != nil {
+		logrus.Warnf("marshaling the leaderboard to JSON failed: %v", err)
+	}
+
+	return string(str)
 }
 
 func removeFromSlice(slice []Player, index int) []Player {
 	return append(slice[:index], slice[index+1:]...)
-}
-
-// isToday checks is the time.Time is from "today" where "today" is in terms of
-// PT.
-func isToday(t time.Time) bool {
-	loc, err := time.LoadLocation("America/Los_Angeles")
-	if err != nil {
-		log.Fatalf("getting time zone location for America/Los_Angeles failed: %v", err)
-	}
-	// Get today in terms of our location.
-	today := time.Now().UTC().In(loc).Day()
-	// Get the last checked-in date in terms of our location.
-	lastCheckedIn := t.UTC().In(loc).Day()
-
-	return today == lastCheckedIn
 }
 
 // getStringParam makes sure a string parameter passed to the server fits the constraints.
@@ -171,10 +216,6 @@ func isToday(t time.Time) bool {
 func getStringParam(req *http.Request, key string) string {
 	keys, ok := req.URL.Query()[key]
 	if !ok || len(keys[0]) < 1 || len(keys[0]) >= 50 {
-		return ""
-	}
-	// Make sure it is not offensive.
-	if goaway.IsProfane(keys[0]) {
 		return ""
 	}
 	return keys[0]
@@ -210,89 +251,123 @@ func humanTime(t time.Time) string {
 	return fmt.Sprintf("%d years", int(d.Hours())/24/365)
 }
 
-// getIP gets the IP of the incoming request.
-func getIP(r *http.Request) string {
-	// Get the IP from the X-REAL-IP header
-	ip := r.Header.Get("X-REAL-IP")
-	netIP := net.ParseIP(ip)
-	if netIP != nil {
-		return ip
-	}
-
-	// Get the IP from X-FORWARDED-FOR header
-	ips := r.Header.Get("X-FORWARDED-FOR")
-	splitIps := strings.Split(ips, ",")
-	for _, ip := range splitIps {
-		netIP := net.ParseIP(ip)
-		if netIP != nil {
-			return ip
-		}
-	}
-
-	// Get the IP from RemoteAddr
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return ""
-	}
-	netIP = net.ParseIP(ip)
-	if netIP != nil {
-		return ip
-	}
-	return ""
+type GitHubUser struct {
+	ID       int64  `json:"id"`
+	Login    string `json:"login"`
+	Name     string `json:"name"`
+	Gravatar string `json:"avatar_url"`
 }
 
-// saveStateToFile writes the JSON contents of the current scoreboard to file.
-// The path to the file is passed in to the function.
-func saveStateToFile(file string) {
-	content, err := json.MarshalIndent(scoreboards, "", " ")
-	if err != nil {
-		log.Fatalf("creating JSON to save to file failed: %v", err)
+func (p *Player) setGitHubDataFromToken() {
+	resp := p.doGitHubCall("user")
+	var user GitHubUser
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		logrus.Warnf("decoding the response from the github api failed: %v", err)
 	}
 
-	if err := ioutil.WriteFile(file, content, 0644); err != nil {
-		log.Fatalf("saving JSON state to file %s failed: %v", file, err)
+	// Set the username.
+	p.Username = user.Login
+	p.Gravatar = user.Gravatar
+
+	// Get who the user follows.
+	resp = p.doGitHubCall("user/following")
+	var users []GitHubUser
+	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+		logrus.Warnf("decoding the response from the github api failed: %v", err)
 	}
-	fmt.Printf("Saved JSON state to file: %s\n", file)
+
+	// Set the follows.
+	p.Follows = []string{}
+	for _, u := range users {
+		p.Follows = append(p.Follows, u.Login)
+	}
+
 }
 
-// loadStateFromFile tries to load the state from the file if it exists.
-func loadStateFromFile(file string) {
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		// The file does not exist, let's return early.
-		return
-	}
+func (p Player) doGitHubCall(endpoint string) *http.Response {
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/%s", endpoint), nil)
 
-	b, err := ioutil.ReadFile(file)
+	// add authorization header to the req
+	req.Header.Add("Authorization", "token "+p.Token)
+	req.Header.Add("Accept", "application/vnd.github.v3+json")
+
+	// Send req using http Client
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("reading from file %s failed: %v", file, err)
+		logrus.WithFields(logrus.Fields{
+			"endpoint": endpoint,
+		}).Warnf("response from the github API errored: %v", err)
 	}
 
-	// Try to parse the content as JSON.
-	if err := json.Unmarshal(b, &scoreboards); err != nil {
-		log.Fatalf("reading content in file %s  as JSON failed: %v", file, err)
-	}
+	return resp
 }
 
 func main() {
-	scoreboards = make(map[string]*Team)
-	tmpfile := filepath.Join(os.TempDir(), "keyrace.json")
-
 	// On ^C, or SIGTERM gracefully handle exit.
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		sig := <-signals
-		// Save the file.
-		saveStateToFile(tmpfile)
-		fmt.Printf("Received %s, exiting.\n", sig.String())
-		os.Exit(0)
+		for sig := range signals {
+			// Close the database.
+			db.Close()
+			logrus.Infof("received signal %s, exiting", sig.String())
+			os.Exit(0)
+		}
 	}()
 
-	// Try to load from the state file if it exists.
-	loadStateFromFile(tmpfile)
+	// Get the current working directory.
+	curdir, err := os.Getwd()
+	if err != nil {
+		logrus.Fatalf("getting the current working directory failed: %v", err)
+	}
 
-	http.HandleFunc("/count", count)
-	http.HandleFunc("/", index)
+	// Open the database.
+	dbPath := filepath.Join(curdir, "keyrace.db?mode=rwc&_busy_timeout=10000")
+	db, err = sql.Open("sqlite3", dbPath)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"path": dbPath,
+		}).Fatalf("opening the database failed: %v", err)
+	}
+	logrus.WithFields(logrus.Fields{
+		"path": dbPath,
+	}).Info("opened database")
 
-	http.ListenAndServe(":80", nil)
+	// Create our table.
+	createTableStatement := `
+	CREATE TABLE IF NOT EXISTS players (
+		id INTEGER NOT NULL PRIMARY KEY,
+		username TEXT NOT NULL UNIQUE,
+		token TEXT NOT NULL UNIQUE,
+		score INTEGER NOT NULL DEFAULT 0,
+		last_updated TEXT NOT NULL,
+		follows TEXT NOT NULL
+	);
+	ALTER TABLE players ADD COLUMN shadow_ban INTEGER NOT NULL DEFAULT 0;
+	ALTER TABLE players ADD COLUMN gravatar TEXT NOT NULL DEFAULT '';
+	`
+	_, err = db.Exec(createTableStatement)
+	if err != nil {
+		logrus.Warnf("creating/updating the sqlite table failed: %v -> %s", err, createTableStatement)
+		// We only warn, since likely it just couldn't do the migrations.
+	}
+	logrus.WithFields(logrus.Fields{
+		"table": "players",
+	}).Info("created database table if it didn't exist")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/count", count)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://github.com/nat/keyrace", 301)
+	})
+
+	// Setup the logger.
+	muxLogger := http_logrus.Middleware(logrus.WithField("type", "request"))(mux)
+
+	// TODO: skip this if in DEV mode, maybe set an env variable.
+	// We need to generate the certificate.
+	domain := "keyrace.app"
+	logrus.Infof("Server is listening at https://%s..", domain)
+	logrus.Fatal(http.Serve(autocert.NewListener(domain), muxLogger))
 }
