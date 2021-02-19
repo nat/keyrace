@@ -313,8 +313,13 @@ extension MenubarItem : NSMenuDelegate {
         (self.hourChartItem.view as? TypingChart)?.NewData((keyTap?.getHoursChart())!, color: [255, 0, 0])
         (self.keyChartItem.view as? TypingChart)?.NewData((keyTap?.getKeysChart())!, color: [0, 255, 255])
         (self.symbolChartItem.view as? TypingChart)?.NewData((keyTap?.getSymbolsChart())!, color: [0, 255, 255])
+
         let leaderboardView = (self.leaderboardItem.view as? NSTextView)
         let str = (keyTap?.getLeaderboardText())
+        // First empy out the string.
+        leaderboardView!.performValidatedReplacement(
+            in: NSRange(location: 0, length: leaderboardView!.string.count),
+            with: NSAttributedString())
         leaderboardView!.performValidatedReplacement(
             in: NSRange(location: 0, length: leaderboardView!.string.count),
             with: str!)
