@@ -56,7 +56,13 @@ public class HourAxisValueFormatter: NSObject, IAxisValueFormatter {
 
 public class KeyAxisValueFormatter: NSObject, IAxisValueFormatter {
     public func stringForValue(_ value: Double, axis: AxisBase?) -> String {
-        return "\(Character(UnicodeScalar(Int(97 + value))!))"
+        return "\(Character(UnicodeScalar(Int(97 + value))!))" // 97 is 'a'
+    }
+}
+
+public class SymbolAxisValueFormatter: NSObject, IAxisValueFormatter {
+    public func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+        return "\(Character(UnicodeScalar(Int(33 + value))!))" // 33 is '!'
     }
 }
 
@@ -123,6 +129,7 @@ class MenubarItem : NSObject {
     private var minChartItem : NSMenuItem
     private var hourChartItem : NSMenuItem
     private var keyChartItem : NSMenuItem
+    private var symbolChartItem : NSMenuItem
     private var leaderboardItem : NSMenuItem
     
     var gh : GitHub? {
@@ -153,6 +160,7 @@ class MenubarItem : NSObject {
         minChartItem = NSMenuItem()
         hourChartItem = NSMenuItem()
         keyChartItem = NSMenuItem()
+        symbolChartItem = NSMenuItem()
         leaderboardItem = NSMenuItem()
 
         super.init()
@@ -165,6 +173,8 @@ class MenubarItem : NSObject {
         hourChartItem.view = hourChart
         let keyChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
         keyChartItem.view = keyChart
+        let symbolChart = TypingChart(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
+        symbolChartItem.view = symbolChart
 
         minChart.xAxis.labelPosition = .bottom
         minChart.xAxis.labelFont = .systemFont(ofSize: 8.0)
@@ -185,7 +195,13 @@ class MenubarItem : NSObject {
         keyChart.xAxis.valueFormatter = KeyAxisValueFormatter()
         keyChart.xAxis.drawLabelsEnabled = true
         
-
+        symbolChart.xAxis.labelPosition = .bottom
+        symbolChart.xAxis.labelFont = .systemFont(ofSize: 8.0)
+        symbolChart.xAxis.labelCount = 25
+        symbolChart.xAxis.granularity = 1
+        symbolChart.xAxis.valueFormatter = SymbolAxisValueFormatter()
+        symbolChart.xAxis.drawLabelsEnabled = true
+        
         let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
         leaderboard.string = ""
         leaderboard.isRichText = true
@@ -207,6 +223,8 @@ class MenubarItem : NSObject {
         statusBarMenu.addItem(hourChartItem)
         statusBarMenu.addItem(NSMenuItem.separator())
         statusBarMenu.addItem(keyChartItem)
+        statusBarMenu.addItem(NSMenuItem.separator())
+        statusBarMenu.addItem(symbolChartItem)
         statusBarMenu.addItem(NSMenuItem.separator())
         statusBarMenu.addItem(leaderboardItem)
         statusBarMenu.addItem(settingsMenuItem)
@@ -294,6 +312,7 @@ extension MenubarItem : NSMenuDelegate {
         (self.minChartItem.view as? TypingChart)?.NewData((keyTap?.getMinutesChart())!)
         (self.hourChartItem.view as? TypingChart)?.NewData((keyTap?.getHoursChart())!, color: [255, 0, 0])
         (self.keyChartItem.view as? TypingChart)?.NewData((keyTap?.getKeysChart())!, color: [0, 255, 255])
+        (self.symbolChartItem.view as? TypingChart)?.NewData((keyTap?.getSymbolsChart())!, color: [0, 255, 255])
         let leaderboardView = (self.leaderboardItem.view as? NSTextView)
         let str = (keyTap?.getLeaderboardText())
         leaderboardView!.performValidatedReplacement(

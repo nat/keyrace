@@ -148,8 +148,13 @@ class KeyTap {
     }
 
     func getKeysChart() -> [Int] {
-        // Return the last 20 minutes minutely
+        // Return key press counts for the lowercase alphabet
         return Array(keys[97...97+25])
+    }
+
+    func getSymbolsChart() -> [Int] {
+        // Return key press counts for the the numbers
+        return Array(keys[33...57])
     }
 
     func getLeaderboardText() -> NSMutableAttributedString {
