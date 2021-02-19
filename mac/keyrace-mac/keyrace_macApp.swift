@@ -213,28 +213,16 @@ class KeyTap {
             paragraphStyle.lineSpacing = 8
             paragraphStyle.alignment = .justified
             self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
+            // Add the tab stops so things are well aligned.
+            paragraphStyle.tabStops = [NSTextTab(textAlignment: NSTextAlignment.left, location: 150, options: [:])]
+            paragraphStyle.headIndent = 150
             
             for (i, player) in leaderboard.enumerated(){
                 let fullUsername = "    @" + player.username
-                var score = String(format: " \t %d", player.score)
-                if player.username.count < 6 {
-                    // Add an extra tab for justication
-                    // FIXME: this is hokey...
-                    score = " \t"+score
-                }
-                if player.username.count < 9 {
-                    // Add an extra tab for justication
-                    // FIXME: this is hokey...
-                    score = " \t"+score
-                }
-                if player.username.count < 13 {
-                    // Add an extra tab for justication
-                    // FIXME: this is hokey...
-                    score = " \t"+score
-                }
+                var score = String(format: "\t%d", player.score)
                 if i == 0 {
                     // They are the winner!
-                    score += "\t 🎉"
+                    score += "   🎉"
                 }
                 // Add the new line.
                 score += "\n"
