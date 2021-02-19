@@ -168,15 +168,16 @@ func (p Player) getLeaderboard(onlyFollows bool) string {
 	leaderboard := []PlayerScore{}
 
 	// localtime depends on the localtime of the server.
-	query := `SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') ORDER BY score DESC LIMIT 20`
+	query := fmt.Sprintf(`SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND ( shadow_ban = 0 OR username = '%s') ORDER BY score DESC LIMIT 20`, p.Username)
 	if onlyFollows {
 		// Make sure we get ourselves in the leaderboard as well.
-		filter := fmt.Sprintf("'%s'", p.Username)
+		filter := ""
 		for _, f := range p.Follows {
 			filter += fmt.Sprintf(",'%s'", f)
 		}
+		filter = strings.TrimPrefix(filter, ",")
 
-		query = fmt.Sprintf(`SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND username IN (%s) ORDER BY score DESC LIMIT 20`, filter)
+		query = fmt.Sprintf(`SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND (( username IN (%s) AND shadow_ban = 0 ) OR username = '%s') ORDER BY score DESC LIMIT 20`, filter, p.Username)
 	}
 	rows, err := db.Query(query)
 	if err != nil {
@@ -344,7 +345,8 @@ func main() {
 		last_updated TEXT NOT NULL,
 		follows TEXT NOT NULL
 	);
-	ALTER TABLE players ADD COLUMN gravatar NOT NULL DEFAULT '';
+	ALTER TABLE players ADD COLUMN shadow_ban INTEGER NOT NULL DEFAULT 0;
+	ALTER TABLE players ADD COLUMN gravatar TEXT NOT NULL DEFAULT '';
 	`
 	_, err = db.Exec(createTableStatement)
 	if err != nil {
