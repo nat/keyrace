@@ -296,8 +296,26 @@ class MenubarItem : NSObject {
     
         // Save the setting.
         MenuSettings.setOnlyShowFollows(self.onlyShowFollows.state)
+        
         // Update the leaderboard.
         self.keyTap?.uploadCount()
+        self.updateLeaderboard()
+    }
+    
+    func updateLeaderboard() {
+        let leaderboardView = (self.leaderboardItem.view as? NSTextView)
+        let str = (keyTap?.getLeaderboardText())
+        leaderboardView!.bounds = NSRect(x: 0, y: 0, width: 350, height: 0)
+        // First empy out the string.
+        let ts = leaderboardView!.textStorage!
+        ts.beginEditing()
+        leaderboardView!.performValidatedReplacement(
+            in: NSRange(location: 0, length: leaderboardView!.string.count),
+            with: NSAttributedString())
+        leaderboardView!.performValidatedReplacement(
+            in: NSRange(location: 0, length: leaderboardView!.string.count),
+            with: str!)
+        ts.endEditing()
     }
 
     @objc func quit() {
@@ -314,18 +332,8 @@ extension MenubarItem : NSMenuDelegate {
         (self.keyChartItem.view as? TypingChart)?.NewData((keyTap?.getKeysChart())!, color: [0, 255, 255])
         (self.symbolChartItem.view as? TypingChart)?.NewData((keyTap?.getSymbolsChart())!, color: [0, 255, 255])
 
-        let leaderboardView = (self.leaderboardItem.view as? NSTextView)
-        let str = (keyTap?.getLeaderboardText())
-        // First empy out the string.
-        leaderboardView!.performValidatedReplacement(
-            in: NSRange(location: 0, length: leaderboardView!.string.count),
-            with: NSAttributedString())
-        leaderboardView!.performValidatedReplacement(
-            in: NSRange(location: 0, length: leaderboardView!.string.count),
-            with: str!)
+        self.updateLeaderboard()
         
         self.onlyShowFollows.state = MenuSettings.getOnlyShowFollows()
-        
-        self.leaderboardItem.isHidden = true // FIXME why doesn't this work?
     }
 }

@@ -241,14 +241,16 @@ class KeyTap {
                     DispatchQueue.main.sync {
                         if a.count > 0 {
                             let url = URLComponents(string: a)?.url
-                            let avatar =  NSImage.init(contentsOf: url!)!
-                            avatar.size = NSSizeFromString("20,20")
-                            let circleAvatar = avatar.oval()
-                            let attachment = NSTextAttachment()
-                            let attachmentCell: NSTextAttachmentCell = NSTextAttachmentCell.init(imageCell: circleAvatar)
-                            attachment.attachmentCell = attachmentCell
-                            attrImage = NSMutableAttributedString(attributedString: NSAttributedString(attachment: attachment))
-                            attrImage.addAttribute(.baselineOffset, value: -5, range: .init(location: 0, length: 1))
+                            if let data = try? Data.init(contentsOf: url!, options: []) {
+                                let avatar = NSImage(data: data)!
+                                avatar.size = NSSizeFromString("20,20")
+                                let circleAvatar = avatar.circle()
+                                let attachment = NSTextAttachment()
+                                let attachmentCell: NSTextAttachmentCell = NSTextAttachmentCell.init(imageCell: circleAvatar)
+                                attachment.attachmentCell = attachmentCell
+                                attrImage = NSMutableAttributedString(attributedString: NSAttributedString(attachment: attachment))
+                                attrImage.addAttribute(.baselineOffset, value: -5, range: .init(location: 0, length: 1))
+                            }
                         }
                     }
                     
@@ -442,7 +444,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension NSImage {
     // Copies this image to a new one with a circular mask.
-    func oval() -> NSImage {
+    func circle() -> NSImage {
         let image = NSImage(size: size)
         image.lockFocus()
 
