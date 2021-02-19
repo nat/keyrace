@@ -142,7 +142,7 @@ class KeyTap {
         
         var mins : [Int] = []
         for i in (0...20).reversed() {
-            currMin - i > 0 ? mins.append(minutes[currMin - i]): mins.append(minutes[1440 - i])
+            currMin - i > 0 ? mins.append(minutes[currMin - i]): mins.append(minutes[1440 + i - (20 - currMin)])
         }
         return mins
     }
