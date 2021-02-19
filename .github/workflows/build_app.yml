@@ -1,0 +1,21 @@
+name: build mac app
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
+      - name: Select Xcode 12.4
+        run: sudo xcode-select -switch /Applications/Xcode_12.4.app
+      - name: Build project
+        run: make keyrace-mac
+      - name: Save .zip as artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: keyrace-mac.app
+          path: ./build/mac
