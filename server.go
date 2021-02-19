@@ -305,9 +305,8 @@ func (p Player) doGitHubCall(endpoint string) *http.Response {
 
 func main() {
 	// On ^C, or SIGTERM gracefully handle exit.
-	signals := make(chan os.Signal)
-	signal.Notify(signals, os.Interrupt)
-	signal.Notify(signals, syscall.SIGTERM)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		for sig := range signals {
 			// Close the database.
