@@ -102,13 +102,18 @@ class KeyTap {
         if (lastDay != day) {
             lastDay = day
             keycount = 0
-            minutes = [Int](repeating:0, count:1440)
+            minutes.replaceSubrange(0..<1420, with: repeatElement(0, count: 1420)) // Leave last 20 minutes of yesturday to show on chart
             keys = [Int](repeating:0, count:256)
         }
         
         keycount += 1
         
         let hour = calendar.component(.hour, from: date)
+        
+        if (0 < hour && hour < 23) {
+            minutes.replaceSubrange(1420..<1440, with: repeatElement(0, count: 20)) // Deletes the last 20 minutes of the previous day
+        }
+        
         let minute = calendar.component(.minute, from: date)
         minutes[hour*60 + minute] += 1
 
@@ -134,7 +139,12 @@ class KeyTap {
         let hour = calendar.component(.hour, from: date)
         let min = calendar.component(.minute, from: date)
         let currMin = hour*60 + min
-        return Array(minutes[currMin - 20...currMin])
+        
+        var mins : [Int] = []
+        for i in (0...20).reversed() {
+            currMin - i > 0 ? mins.append(minutes[currMin - i]): mins.append(minutes[1440 - i])
+        }
+        return mins
     }
 
     func getHoursChart() -> [Int] {
