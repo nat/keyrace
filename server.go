@@ -25,12 +25,14 @@ var db *sql.DB
 
 type PlayerScore struct {
 	Username string `json:"username"`
+	Gravatar string `json:"gravatar"`
 	Score    int64  `json:"score"`
 }
 
 type Player struct {
 	ID       int64    `json:"id"`
 	Username string   `json:"username"`
+	Gravatar string   `json:"gravatar"`
 	Token    string   `json:"token"`
 	Score    int64    `json:"score"`
 	Follows  []string `json:"follows"`
@@ -58,10 +60,10 @@ ON CONFLICT(token) DO UPDATE SET score=excluded.score, last_updated=excluded.las
 	} else {
 		// If we have a username, upsert that as well.
 		stmt, err = tx.Prepare(fmt.Sprintf(
-			`INSERT INTO players(token,username,score,last_updated,follows)
-VALUES('%s','%s',%d,datetime('now'),'%s')
-ON CONFLICT(username) DO UPDATE SET token=excluded.token, score=excluded.score, last_updated=excluded.last_updated, follows=excluded.follows`,
-			p.Token, p.Username, p.Score, strings.Join(p.Follows, ",")))
+			`INSERT INTO players(token,username,gravatar,score,last_updated,follows)
+VALUES('%s','%s','%s',%d,datetime('now'),'%s')
+ON CONFLICT(username) DO UPDATE SET token=excluded.token, score=excluded.score, last_updated=excluded.last_updated, follows=excluded.follows, gravatar=excluded.gravatar`,
+			p.Token, p.Username, p.Gravatar, p.Score, strings.Join(p.Follows, ",")))
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("upserting player with token %q | username %q in db failed: %v", p.Token, p.Username, err)
@@ -85,8 +87,7 @@ ON CONFLICT(username) DO UPDATE SET token=excluded.token, score=excluded.score, 
 	// let's get their data from the database.
 	if len(p.Username) == 0 {
 		var follows string
-		if err := db.QueryRow("SELECT id,username,follows FROM players WHERE token=?", p.Token).Scan(&p.ID, &p.Username, &follows); err != nil {
-			tx.Rollback()
+		if err := db.QueryRow("SELECT id,username,follows,gravatar FROM players WHERE token=?", p.Token).Scan(&p.ID, &p.Username, &follows, &p.Gravatar); err != nil {
 			return fmt.Errorf("querying the db for player with token %q failed: %v", p.Token, err)
 		}
 
@@ -97,6 +98,7 @@ ON CONFLICT(username) DO UPDATE SET token=excluded.token, score=excluded.score, 
 		"username": p.Username,
 		"token":    p.Token,
 		"score":    p.Score,
+		"gravatar": p.Gravatar,
 	}).Info("updated player in database")
 	return nil
 }
@@ -145,6 +147,12 @@ func count(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// If they don't have a gravatar, try and get it.
+	if len(player.Gravatar) == 0 {
+		player.setGitHubDataFromToken()
+		player.upsertInDB()
+	}
+
 	// Make sure we have a Username, this should never be empty.
 	if len(player.Username) == 0 {
 		logrus.Warn("github username cannot be empty")
@@ -160,7 +168,7 @@ func (p Player) getLeaderboard(onlyFollows bool) string {
 	leaderboard := []PlayerScore{}
 
 	// localtime depends on the localtime of the server.
-	query := `SELECT username,score FROM players WHERE date(last_updated,'localtime') = date('now','localtime') ORDER BY score DESC LIMIT 20`
+	query := `SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') ORDER BY score DESC LIMIT 20`
 	if onlyFollows {
 		// Make sure we get ourselves in the leaderboard as well.
 		filter := fmt.Sprintf("'%s'", p.Username)
@@ -168,7 +176,7 @@ func (p Player) getLeaderboard(onlyFollows bool) string {
 			filter += fmt.Sprintf(",'%s'", f)
 		}
 
-		query = fmt.Sprintf(`SELECT username,score FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND username IN (%s) ORDER BY score DESC LIMIT 20`, filter)
+		query = fmt.Sprintf(`SELECT username,score,gravatar FROM players WHERE date(last_updated,'localtime') = date('now','localtime') AND username IN (%s) ORDER BY score DESC LIMIT 20`, filter)
 	}
 	rows, err := db.Query(query)
 	if err != nil {
@@ -180,7 +188,7 @@ func (p Player) getLeaderboard(onlyFollows bool) string {
 
 	for rows.Next() {
 		player := PlayerScore{}
-		if err := rows.Scan(&player.Username, &player.Score); err != nil {
+		if err := rows.Scan(&player.Username, &player.Score, &player.Gravatar); err != nil {
 			logrus.Warnf("failed to scan row for player for leaderboard: %v", err)
 		}
 
@@ -243,9 +251,10 @@ func humanTime(t time.Time) string {
 }
 
 type GitHubUser struct {
-	ID    int64  `json:"id"`
-	Login string `json:"login"`
-	Name  string `json:"name"`
+	ID       int64  `json:"id"`
+	Login    string `json:"login"`
+	Name     string `json:"name"`
+	Gravatar string `json:"avatar_url"`
 }
 
 func (p *Player) setGitHubDataFromToken() {
@@ -257,6 +266,7 @@ func (p *Player) setGitHubDataFromToken() {
 
 	// Set the username.
 	p.Username = user.Login
+	p.Gravatar = user.Gravatar
 
 	// Get who the user follows.
 	resp = p.doGitHubCall("user/following")
@@ -333,10 +343,13 @@ func main() {
 		score INTEGER NOT NULL DEFAULT 0,
 		last_updated TEXT NOT NULL,
 		follows TEXT NOT NULL
-	);`
+	);
+	ALTER TABLE players ADD COLUMN gravatar NOT NULL DEFAULT '';
+	`
 	_, err = db.Exec(createTableStatement)
 	if err != nil {
-		logrus.Fatalf("creating the sqlite table failed: %v -> %s", err, createTableStatement)
+		logrus.Warnf("creating/updating the sqlite table failed: %v -> %s", err, createTableStatement)
+		// We only warn, since likely it just couldn't do the migrations.
 	}
 	logrus.WithFields(logrus.Fields{
 		"table": "players",
