@@ -17,6 +17,16 @@ keyrace-server-linux: $(wildcard *.go)
 	# -tags "$(BUILDTAGS)" \
 	# -installsuffix netgo -ldflags "-w -extldflags" $?
 
+keyrace-mac:
+	set -eo pipefail
+	mkdir -p build
+	xcodebuild \
+		-workspace mac/keyrace-mac.xcworkspace/ \
+		-scheme keyrace-mac \
+		-archivePath $(PWD)/build/keyrace.xcarchive \
+		clean archive
+	cp -r build/keyrace.xcarchive/Products/Applications/keyrace-mac.app build
+	
 server-test: $(wildcard *.go)
 	@echo "Running the go tests..."
 	go mod vendor

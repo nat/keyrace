@@ -13,11 +13,9 @@ jobs:
       - name: Select Xcode 12.4
         run: sudo xcode-select -switch /Applications/Xcode_12.4.app
       - name: Build project
-        run: ./.github/scripts/build_app.sh
-      - name: Exporting .zip
-        run: ./.github/scripts/export_zip.sh
+        run: make keyrace-mac
       - name: Save .zip as artifact
         uses: actions/upload-artifact@v1
         with:
-          name: keyrace.zip
-          path: ./build/keyrace.zip
+          name: keyrace-mac.app
+          path: ./build/keyrace-mac.app
