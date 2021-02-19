@@ -41,6 +41,9 @@ public class HourAxisValueFormatter: NSObject, IAxisValueFormatter {
         if (value == 12.0) {
             return "noon"
         }
+        if (value == 0.0) {
+            return "12am"
+        }
 
         var str = "\(Int(value)%12)"
         
