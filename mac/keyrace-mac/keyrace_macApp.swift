@@ -189,15 +189,14 @@ class KeyTap {
 
             
             if let json_leaders = try? JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
-                let title = "Leaderboard\n"
-                let attrTitle = NSMutableAttributedString(string: title)
-                attrTitle.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 14, weight: .bold) as Any, range: NSRange(location: 0, length: title.count))
+                // Re-initialize the leaderboard text.
                 self.leaderboardText = NSMutableAttributedString()
-                self.leaderboardText.append(attrTitle)
+                let attrBlankLine = NSMutableAttributedString(string: " \n")
+                self.leaderboardText.append(attrBlankLine)
                 
                 // Add paragraph styling
                 let paragraphStyle = NSMutableParagraphStyle()
-                paragraphStyle.lineSpacing = 7
+                paragraphStyle.lineSpacing = 8
                 paragraphStyle.alignment = .justified
                 self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
                 
@@ -206,31 +205,65 @@ class KeyTap {
                     if let username = leader["username"] as? String {
                         u = username
                     }
-                    let fullUsername = "@" + u
+                    let fullUsername = "    @" + u
                     var s = ""
                     if let score = leader["score"] as? Int {
                         s = String(format: " \t %d", score)
-                        if u.count < 5 {
+                        if u.count < 6 {
                             // Add an extra tab for justication
                             // FIXME: this is hokey...
-                          s = "\t"+s
+                          s = " \t"+s
+                        }
+                        if u.count < 9 {
+                            // Add an extra tab for justication
+                            // FIXME: this is hokey...
+                          s = " \t"+s
+                        }
+                        if u.count < 13 {
+                            // Add an extra tab for justication
+                            // FIXME: this is hokey...
+                          s = " \t"+s
                         }
                         if i == 0 {
                             // They are the winner!
-                            s += " \t 🎉"
+                            s += "\t 🎉"
                         }
                         s += "\n"
                     }
                     
+                    var a = ""
+                    if let avatar = leader["gravatar"] as? String {
+                        a = avatar
+                    }
+                    
+                    // Create the image for the avatar.
+                    var attrImage = NSMutableAttributedString()
+                    DispatchQueue.main.sync {
+                        if a.count > 0 {
+                            let url = URLComponents(string: a)?.url
+                            let avatar =  NSImage.init(contentsOf: url!)!
+                            avatar.size = NSSizeFromString("20,20")
+                            let circleAvatar = avatar.oval()
+                            let attachment = NSTextAttachment()
+                            let attachmentCell: NSTextAttachmentCell = NSTextAttachmentCell.init(imageCell: circleAvatar)
+                            attachment.attachmentCell = attachmentCell
+                            attrImage = NSMutableAttributedString(attributedString: NSAttributedString(attachment: attachment))
+                            attrImage.addAttribute(.baselineOffset, value: -5, range: .init(location: 0, length: 1))
+                        }
+                    }
+                    
                     // Do the font styling for the line.
                     let attrLine = NSMutableAttributedString(string: fullUsername + s)
-                    attrLine.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular), range: NSRange(location: 0, length: fullUsername.count + s.count))
+                    attrLine.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular), range: NSRange(location: 0, length: fullUsername.count + s.count))
                     attrLine.addAttribute(.link,
                                               value: NSURL(string: "https://github.com/"+u)!,
-                                              range: NSRange(location: 0, length: fullUsername.count))
+                                              range: NSRange(location: 4, length: (fullUsername.count - 4)))
                     attrLine.addAttribute(.cursor,
                                               value: NSCursor.pointingHand,
-                                              range: NSRange(location: 0, length: fullUsername.count))
+                                              range: NSRange(location: 4, length: (fullUsername.count - 4)))
+                    if a.count > 0 {
+                        attrLine.replaceCharacters(in: NSRange(location: 0, length: 3), with: attrImage)
+                    }
                     self.leaderboardText.append(attrLine)
                 }
                 
@@ -404,5 +437,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
+    }
+}
+
+extension NSImage {
+    // Copies this image to a new one with a circular mask.
+    func oval() -> NSImage {
+        let image = NSImage(size: size)
+        image.lockFocus()
+
+        NSGraphicsContext.current?.imageInterpolation = .high
+        let frame = NSRect(origin: .zero, size: size)
+        NSBezierPath(ovalIn: frame).addClip()
+        draw(at: .zero, from: frame, operation: .sourceOver, fraction: 1)
+
+        image.unlockFocus()
+        return image
     }
 }
