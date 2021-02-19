@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		24AF66DA25DE66C500C6DB2C /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4137816025A19C3B004AD04D /* Info.plist */; };
 		4137815825A19C3A004AD04D /* keyrace_macApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137815725A19C3A004AD04D /* keyrace_macApp.swift */; };
 		4137815C25A19C3B004AD04D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815B25A19C3B004AD04D /* Assets.xcassets */; };
 		4137815F25A19C3B004AD04D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815E25A19C3B004AD04D /* Preview Assets.xcassets */; };
@@ -154,6 +155,7 @@
 			files = (
 				4137815F25A19C3B004AD04D /* Preview Assets.xcassets in Resources */,
 				4137815C25A19C3B004AD04D /* Assets.xcassets in Resources */,
+				24AF66DA25DE66C500C6DB2C /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -347,7 +349,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				PRODUCT_BUNDLE_IDENTIFIER = org.nat.keyrace;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -370,7 +372,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				PRODUCT_BUNDLE_IDENTIFIER = org.nat.keyrace;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
