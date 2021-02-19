@@ -102,18 +102,18 @@ class KeyTap {
         if (lastDay != day) {
             lastDay = day
             keycount = 0
-            minutes.replaceSubrange(0..<1420, with: repeatElement(0, count: 1420)) // Leave last 20 minutes of yesturday to show on chart
             keys = [Int](repeating:0, count:256)
+            
+            //  Clears our minutes, leaving the last 20 minutes, and than deletes the rest after 20 minutes
+            minutes.replaceSubrange(0..<1420, with: repeatElement(0, count: 1420))
+            DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(1200), execute: {
+                self.minutes.replaceSubrange(1420..<1440, with: repeatElement(0, count: 20))
+            })
         }
         
         keycount += 1
         
         let hour = calendar.component(.hour, from: date)
-        
-        if (0 < hour && hour < 23) {
-            minutes.replaceSubrange(1420..<1440, with: repeatElement(0, count: 20)) // Deletes the last 20 minutes of the previous day
-        }
-        
         let minute = calendar.component(.minute, from: date)
         minutes[hour*60 + minute] += 1
 
