@@ -15,4 +15,4 @@ open keyrace-mac.xcworkspace
 
 <kbd>Cmd (⌘)</kbd> + <kbd>R</kbd> or `Product` > `Run` in Xcode!
 
-**NOTE:** If the option to run is grayed out, make sure that the correct scheme is selected: `Product` > `Scheme` > `keyrace-mac`. 
+**NOTE:** If the `Run` option is grayed out in the menu, make sure that the correct scheme is selected: `Product` > `Scheme` > `keyrace-mac`. 
