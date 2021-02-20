@@ -248,6 +248,20 @@ class MenubarItem : NSObject {
             loginMenuItem.title = "Logged in as @" + gh!.username!
             loginMenuItem.isEnabled = false
             loginMenuItem.target = nil
+        } else {
+            let alert = NSAlert()
+            alert.messageText = "We could not log in with existing credentials. Would you like to retry?"
+            alert.addButton(withTitle: "Yes")
+            alert.addButton(withTitle: "No")
+            let modalResult = alert.runModal()
+            
+            switch modalResult {
+            case .alertFirstButtonReturn:
+                // User wants to re-authenticate.
+                login()
+            default:
+                return
+            }
         }
     }
     
@@ -256,7 +270,7 @@ class MenubarItem : NSObject {
             return
         }
         
-        if gh!.token != nil {
+        if !(gh!.token ?? "").isEmpty {
             gh!.getUserName()
             loggedIn()
             return

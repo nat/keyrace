@@ -26,8 +26,12 @@ class GitHub {
         
         let filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
         self.token = try? String(contentsOf: filename, encoding: .utf8)
-        getUserName() // FIXME: save/load username in a file to avoid this
-        self.loggedIn = true
+        if token != nil {
+            getUserName() // FIXME: save/load username in a file to avoid this
+            self.loggedIn = true
+        } else {
+            return
+        }
     }
     
     private func saveToken() {
@@ -116,6 +120,16 @@ class GitHub {
                 if let login = json["login"] as? String {
                     username = login
                 }
+            }
+        } else if let response = response as? HTTPURLResponse, response.statusCode == 401 {
+            // Bad credentials, therefore user needs to re-authenticate, so we can remove the file.
+            let filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
+            
+            do {
+                self.token = ""
+                try FileManager.default.removeItem(at: filename)
+            } catch {
+                NSLog("Could not delete old token from \(filename)")
             }
         }
     }
