@@ -40,12 +40,15 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
     let keyTap = Unmanaged<KeyTap>.fromOpaque(refcon!).takeUnretainedValue()
 
     if [.keyDown].contains(type) {
-        var char = UniChar()
-        var length = 0
-        event.keyboardGetUnicodeString(maxStringLength: 1, actualStringLength: &length, unicodeString: &char)
-        keyTap.increment(char)
-
-        keyTap.appDelegate.menubarItem?.statusBarItem.button?.title = formatCount(count: keyTap.keycount)
+        DispatchQueue.global(qos: .background).async {
+            var char = UniChar()
+            var length = 0
+            event.keyboardGetUnicodeString(maxStringLength: 1, actualStringLength: &length, unicodeString: &char)
+            keyTap.increment(char)
+        }
+        DispatchQueue.main.async {
+            keyTap.appDelegate.menubarItem?.statusBarItem.button?.title = formatCount(count: keyTap.keycount)
+        }
     }
 
     if [.tapDisabledByTimeout].contains(type) {
@@ -287,11 +290,14 @@ class KeyTap {
     }
 
     func saveCount() {
-        var filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.tmp")
+        var attributes = [FileAttributeKey : Any]()
+        attributes[.posixPermissions] = 0o600
 
+        var filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.tmp")
         var str = String(keycount)
         do {
             try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
+            try FileManager.default.setAttributes(attributes, ofItemAtPath: filename.path)
         } catch {
             NSLog("Could not write keycount to \(filename.path)")
             // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
@@ -302,6 +308,7 @@ class KeyTap {
         str = minStrings.joined(separator: ",")
         do {
             try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
+            try FileManager.default.setAttributes(attributes, ofItemAtPath: filename.path)
         } catch {
             NSLog("Could not write keycount to \(filename.path)")
             // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
@@ -312,6 +319,7 @@ class KeyTap {
         str = keyStrings.joined(separator: ",")
         do {
             try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
+            try FileManager.default.setAttributes(attributes, ofItemAtPath: filename.path)
         } catch {
             NSLog("Could not write histogram to \(filename.path)")
             // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
