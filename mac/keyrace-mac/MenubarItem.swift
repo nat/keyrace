@@ -152,7 +152,9 @@ class MenubarItem : NSObject {
 
     let statusBarMenu = NSMenu(title: "foo")
 
-    init(title: String) {
+    init(title: String, kt: KeyTap) {
+        self.keyTap = kt
+        
         settingsMenuItem = NSMenuItem(title: "Settings", action: nil, keyEquivalent: "")
         settingsSubMenu = NSMenu.init(title: "Settings")
         settingsMenuItem.submenu = settingsSubMenu
@@ -205,19 +207,10 @@ class MenubarItem : NSObject {
         symbolChart.xAxis.valueFormatter = SymbolAxisValueFormatter()
         symbolChart.xAxis.drawLabelsEnabled = true
         
-        let leaderboard = NSTextView(frame: CGRect(x: 0, y: 0, width: 350, height: 0))
-        leaderboard.string = ""
-        leaderboard.isRichText = true
-        leaderboard.drawsBackground = false
-        leaderboard.textContainerInset = NSSizeFromString("10")
-        let linkAttributes : [NSAttributedString.Key : Any] = [
-            .foregroundColor: NSColor.blue,
-            .font: NSFont.monospacedSystemFont(ofSize: 12, weight: .bold),
-            .underlineStyle:  0,
-            .cursor:NSCursor.pointingHand,
-        ]
-        leaderboard.linkTextAttributes = linkAttributes
-        leaderboardItem.view = leaderboard
+        let leaderboardView = NSHostingView(rootView: LeaderboardView(leaderboard: self.keyTap!))
+        // Figure out how to get this to resize.
+        leaderboardView.frame = CGRect(x: 0, y: 0, width: 350, height: 300)
+        self.leaderboardItem.view = leaderboardView
         
         quitMenuItem.target = self
         loginMenuItem.target = self
@@ -323,23 +316,6 @@ class MenubarItem : NSObject {
         
         // Update the leaderboard.
         self.keyTap?.uploadCount()
-        self.updateLeaderboard()
-    }
-    
-    func updateLeaderboard() {
-        let leaderboardView = (self.leaderboardItem.view as? NSTextView)
-        let str = (keyTap?.getLeaderboardText())
-        leaderboardView!.bounds = NSRect(x: 0, y: 0, width: 350, height: 0)
-        // First empy out the string.
-        let ts = leaderboardView!.textStorage!
-        ts.beginEditing()
-        leaderboardView!.performValidatedReplacement(
-            in: NSRange(location: 0, length: leaderboardView!.string.count),
-            with: NSAttributedString())
-        leaderboardView!.performValidatedReplacement(
-            in: NSRange(location: 0, length: leaderboardView!.string.count),
-            with: str!)
-        ts.endEditing()
     }
 
     @objc func quit() {
@@ -355,8 +331,6 @@ extension MenubarItem : NSMenuDelegate {
         (self.hourChartItem.view as? TypingChart)?.NewData((keyTap?.getHoursChart())!, color: [255, 0, 0])
         (self.keyChartItem.view as? TypingChart)?.NewData((keyTap?.getKeysChart())!, color: [0, 255, 255])
         (self.symbolChartItem.view as? TypingChart)?.NewData((keyTap?.getSymbolsChart())!, color: [0, 255, 255])
-
-        self.updateLeaderboard()
         
         self.onlyShowFollows.state = MenuSettings.getOnlyShowFollows()
     }

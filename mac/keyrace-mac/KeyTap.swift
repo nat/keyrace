@@ -3,6 +3,7 @@
 import Foundation
 import Accessibility
 import Cocoa
+import SwiftUI
 
 func formatCount(count: Int) -> String {
     var str = ""
@@ -58,13 +59,9 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
     return Unmanaged.passRetained(event)
 }
 
-struct Player: Codable {
-    var username: String
-    var gravatar: String
-    var score: Int
-}
-
-class KeyTap {
+// This is an ObservableObject so that the UI can subscribe to updates in players,
+// and we’ll use @Published to send updates whenever the player list changes.
+class KeyTap: ObservableObject {
     var appDelegate : AppDelegate
     var keycount = 0
     var lastDay = -1
@@ -74,7 +71,7 @@ class KeyTap {
     var KEYRACE_HOST = "keyrace.app"
     var minutes = [Int](repeating:0, count:1440)
     var keys = [Int](repeating: 0, count:256)
-    var leaderboardText = NSMutableAttributedString()
+    @Published var players: [Player] = []
 
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
@@ -154,10 +151,6 @@ class KeyTap {
         return Array(keys[33...57])
     }
 
-    func getLeaderboardText() -> NSMutableAttributedString {
-        return leaderboardText
-    }
-
     func uploadKeycount() {
         if appDelegate.gh?.token == nil {
             return
@@ -185,75 +178,15 @@ class KeyTap {
             }
 
             // Parse the JSON data for the leaderboard.
-            self.parseJSON(json: data)
+            let decoder = JSONDecoder()
+            if let leaderboard = try? decoder.decode([Player].self, from: data) {
+                DispatchQueue.main.sync {
+                    // Set the players in Leaderboard, so we can auto update the UI.
+                    self.players = leaderboard
+                }
+            }
         }
         task.resume()
-    }
-
-    func parseJSON(json: Data) {
-        let decoder = JSONDecoder()
-
-        if let leaderboard = try? decoder.decode([Player].self, from: json) {
-            // Re-initialize the leaderboard text.
-            self.leaderboardText = NSMutableAttributedString()
-            let attrBlankLine = NSMutableAttributedString(string: " \n")
-            self.leaderboardText.append(attrBlankLine)
-
-            // Add paragraph styling
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineSpacing = 8
-            paragraphStyle.alignment = .justified
-            self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
-            // Add the tab stops so things are well aligned.
-            paragraphStyle.tabStops = [NSTextTab(textAlignment: NSTextAlignment.left, location: 150, options: [:])]
-            paragraphStyle.headIndent = 150
-
-            for (i, player) in leaderboard.enumerated(){
-                let fullUsername = "    @" + player.username
-                var score = String(format: "\t%d", player.score)
-                if i == 0 {
-                    // They are the winner!
-                    score += "   🎉"
-                }
-                // Add the new line.
-                score += "\n"
-
-                // Create the image for the avatar.
-                var attrImage = NSMutableAttributedString()
-                DispatchQueue.main.sync {
-                    let url = URLComponents(string: player.gravatar)?.url
-                    if let data = try? Data.init(contentsOf: url!, options: []) {
-                        let avatar = NSImage(data: data)!
-                        avatar.size = NSSizeFromString("20,20")
-                        let circleAvatar = avatar.circle()
-                        let attachment = NSTextAttachment()
-                        let attachmentCell: NSTextAttachmentCell = NSTextAttachmentCell.init(imageCell: circleAvatar)
-                        attachment.attachmentCell = attachmentCell
-                        attrImage = NSMutableAttributedString(attributedString: NSAttributedString(attachment: attachment))
-                        attrImage.addAttribute(.baselineOffset, value: -6, range: .init(location: 0, length: 1))
-                        attrImage.addAttribute(.link,
-                                              value: NSURL(string: "https://github.com/"+player.username)!,
-                                                  range: .init(location: 0, length: 1))
-                    }
-                }
-
-                // Do the font styling for the line.
-                let attrLine = NSMutableAttributedString(string: fullUsername + score)
-                attrLine.addAttribute(.font, value: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular), range: NSRange(location: 0, length: fullUsername.count + score.count))
-                let usernameRange = NSRange(location: 4, length: (fullUsername.count - 4))
-                attrLine.addAttribute(.link,
-                                      value: NSURL(string: "https://github.com/"+player.username)!,
-                                          range: usernameRange)
-
-                // Add the image.
-                attrLine.replaceCharacters(in: NSRange(location: 0, length: 2), with: attrImage)
-                self.leaderboardText.append(attrLine)
-            }
-
-            // Set the paragraph styling.
-            self.leaderboardText.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: self.leaderboardText.length))
-            self.leaderboardText.setAlignment(.justified, range: NSRange(location: 0, length: self.leaderboardText.length))
-        }
     }
 
     func setupKeyTap() {

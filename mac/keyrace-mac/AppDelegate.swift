@@ -25,13 +25,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var gh : GitHub?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        menubarItem = MenubarItem(title: "Setup Keyrace")
-
+        // Initialize these things first so MenubarItem does not panic.
         gh = GitHub()
-        menubarItem?.gh = gh
-
         keyTap = KeyTap(self)
-        menubarItem?.keyTap = keyTap
+        menubarItem = MenubarItem(title: "Setup Keyrace", kt: keyTap!)
+        menubarItem!.gh = gh
+        
         keyTap!.getAccessibilityPermissions()
     }
     
