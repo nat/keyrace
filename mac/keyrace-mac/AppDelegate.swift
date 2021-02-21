@@ -4,6 +4,7 @@
 //  Created by Nat Friedman on 1/2/21.
 //
 
+import Cocoa
 import Foundation
 import SwiftUI
 
@@ -19,23 +20,45 @@ struct MenuBarPopoverApp: App {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    var popover: NSPopover!
     var statusBarItem: NSStatusItem!
-    var menubarItem: MenubarItem?
     var keyTap : KeyTap?
-    var gh : GitHub?
+    var gitHub : GitHub?
     
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        // Initialize these things first so MenubarItem does not panic.
-        gh = GitHub()
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
+        // Create the status item.
+        self.statusBarItem = NSStatusBar.system.statusItem(withLength: CGFloat(NSStatusItem.variableLength))
+        if let button = self.statusBarItem.button {
+            button.title = "Setup Keyrace"
+            button.action = #selector(togglePopover(_:))
+        }
+        
+        // Initialize these things so we can pass them to the ContentView().
+        gitHub = GitHub()
         keyTap = KeyTap(self)
-        menubarItem = MenubarItem(title: "Setup Keyrace", kt: keyTap!)
-        menubarItem!.gh = gh
         
         keyTap!.getAccessibilityPermissions()
+        
+        // Create the SwiftUI view that provides the window contents.
+        let contentView = ContentView(keyTap: keyTap!, gitHub: gitHub!)
+
+        // Create the popover
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 350, height: 400)
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(rootView: contentView)
+        self.popover = popover
+        
+        NSApp.activate(ignoringOtherApps: true)
     }
     
-    func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
+    @objc func togglePopover(_ sender: AnyObject?) {
+        if let button = self.statusBarItem.button {
+            if self.popover.isShown {
+                self.popover.performClose(sender)
+            } else {
+                self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
+            }
+        }
     }
 }
-

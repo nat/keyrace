@@ -1,5 +1,5 @@
 //
-//  Player.swift
+//  LeaderboardView.swift
 //  keyrace-mac
 //
 //  Created by Jessie Frazelle on 2/20/21.
@@ -42,43 +42,41 @@ extension Player {
 }
 
 struct LeaderboardView: View {
-    @ObservedObject var leaderboard: KeyTap
+    @ObservedObject var keyTap: KeyTap
     @Environment(\.openURL) var openURL
     
     var body: some View {
-        Section {
-            List(leaderboard.players.indexed(), id: \.1.username) { index, player in
-                // Create the profile image in a button so it is a link.
-                Button(action: {
-                    openProfile(player)
-                }) {
-                    Image(nsImage: player.avatar())
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 25, height: 25, alignment: .center)
-                        .clipShape(Circle())
-                        .shadow(radius: 2)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .scaledToFit()
-                .padding(EdgeInsets(top: 2.5, leading: 0, bottom: 2.5, trailing: 0))
-            
-                // Print the username as a link.
-                Link("@" + player.username,
-                     destination: URL(string: "https://github.com/" + player.username)!)
-                    .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .frame(width: 100, alignment: .leading)
-            
-                // Print the score.
-                Text(player.scoreString(index: index))
-                    .font(.system(size: 12, design: .monospaced))
-                
+        List(keyTap.players.indexed(), id: \.1.username) { index, player in
+            // Create the profile image in a button so it is a link.
+            Button(action: {
+                openProfile(player)
+            }) {
+                Image(nsImage: player.avatar())
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 25, height: 25, alignment: .center)
+                    .clipShape(Circle())
+                    .shadow(radius: 2)
             }
-            .listStyle(SidebarListStyle())
-            .frame(minWidth: 350, maxWidth: 350, minHeight: 100, maxHeight: .infinity, alignment: .topLeading)
-            .fixedSize(horizontal: true, vertical: false)
+            .buttonStyle(PlainButtonStyle())
+            .scaledToFit()
+            .padding(EdgeInsets(top: 2.5, leading: 0, bottom: 2.5, trailing: 0))
+        
+            // Print the username as a link.
+            Link("@" + player.username,
+                 destination: URL(string: "https://github.com/" + player.username)!)
+                .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
+                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                .frame(width: 100, alignment: .leading)
+            
+            // Print the score.
+            Text(player.scoreString(index: index))
+                .font(.system(size: 12, design: .monospaced))
+            
         }
+        .listStyle(SidebarListStyle())
+        .frame(minWidth: 350, maxWidth: 350, minHeight: 100, maxHeight: .infinity, alignment: .topLeading)
+        .fixedSize(horizontal: true, vertical: false)
     }
     
     func openProfile(_ player: Player) {

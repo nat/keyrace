@@ -1,8 +1,9 @@
 // Created by Nat Friedman on 1/2/21.
 
-import Foundation
 import Accessibility
 import Cocoa
+import Combine
+import Foundation
 import SwiftUI
 
 func formatCount(count: Int) -> String {
@@ -48,12 +49,12 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
             keyTap.increment(char)
         }
         DispatchQueue.main.async {
-            keyTap.appDelegate.menubarItem?.statusBarItem.button?.title = formatCount(count: keyTap.keycount)
+            keyTap.appDelegate.statusBarItem.button?.title = formatCount(count: keyTap.keycount)
         }
     }
 
     if [.tapDisabledByTimeout].contains(type) {
-        keyTap.appDelegate.menubarItem?.statusBarItem.button?.title = "Lost event tap!"
+        keyTap.appDelegate.statusBarItem.button?.title = "Lost event tap!"
     }
 
     return Unmanaged.passRetained(event)
@@ -71,10 +72,27 @@ class KeyTap: ObservableObject {
     var KEYRACE_HOST = "keyrace.app"
     var minutes = [Int](repeating:0, count:1440)
     var keys = [Int](repeating: 0, count:256)
+    
+    
     @Published var players: [Player] = []
+    @Published var onlyShowFollows: Bool = UserDefaults.standard.onlyShowFollows {
+        didSet {
+            UserDefaults.standard.onlyShowFollows = onlyShowFollows
+        }
+    }
 
+    private var cancelable: AnyCancellable?
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
+        
+        cancelable = UserDefaults.standard.publisher(for: \.onlyShowFollows)
+            .sink(receiveValue: { [weak self] newValue in
+                guard let self = self else { return }
+                if newValue != self.onlyShowFollows { // avoid cycling !!
+                    self.onlyShowFollows = newValue
+                    self.uploadCount()
+                }
+            })
     }
 
     func increment(_ keyCode: UInt16) {
@@ -152,7 +170,7 @@ class KeyTap: ObservableObject {
     }
 
     func uploadKeycount() {
-        if appDelegate.gh?.token == nil {
+        if appDelegate.gitHub?.token == nil {
             return
         }
 
@@ -161,12 +179,12 @@ class KeyTap: ObservableObject {
             URLQueryItem(name: "count", value: "\(keycount)")
         ]
         // Add the query to the URL if we are only supposed to show people they follow.
-        if MenuSettings.getOnlyShowFollows() == NSControl.StateValue.on {
+        if onlyShowFollows {
             url.queryItems?.append(URLQueryItem(name: "only_follows", value: "1"))
         }
 
         var request = URLRequest(url: url.url!)
-        request.addValue("Bearer \(appDelegate.gh!.token!)", forHTTPHeaderField: "Authorization")
+        request.addValue("Bearer \(appDelegate.gitHub!.token!)", forHTTPHeaderField: "Authorization")
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data,                            // is there data
@@ -213,7 +231,7 @@ class KeyTap: ObservableObject {
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
 
-        appDelegate.menubarItem!.statusBarItem.button?.title = formatCount(count: keycount)
+        appDelegate.statusBarItem.button?.title = formatCount(count: keycount)
 
         uploadCount()
     }

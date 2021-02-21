@@ -9,11 +9,11 @@ import Foundation
 import SwiftUI
 import Cocoa
 
-class GitHub {
+class GitHub: ObservableObject {
     static let TOKEN_FILE = ".keyrace.ghtoken"
-    var loggedIn : Bool = false
-    var username : String?
-    var token : String?
+    @Published var loggedIn : Bool = false
+    @Published var username : String?
+    @Published var token : String?
     
     init() {
         loadToken()
@@ -52,7 +52,7 @@ class GitHub {
         }
     }
     
-    func startDeviceAuth(clientId: String, scope: String, callback: @escaping () -> ()) -> (userCode: String, verificationUri: String){
+    func startDeviceAuth(clientId: String, scope: String) -> (userCode: String, verificationUri: String){
         let url = URL(string: "https://github.com/login/device/code")!
         
         var request = URLRequest(url: url)
@@ -69,7 +69,7 @@ class GitHub {
             let interval = Double(params?["interval"] ?? "15.0")!
             
             DispatchQueue.global(qos: .background).async {
-                self.pollForAuth(interval: interval * 2, clientId: clientId, deviceCode: params!["device_code"]!, callback: callback)
+                self.pollForAuth(interval: interval * 2, clientId: clientId, deviceCode: params!["device_code"]!)
             }
 
             return (params!["user_code"]!, params!["verification_uri"]!)
@@ -78,7 +78,7 @@ class GitHub {
         return ("", "")
     }
     
-    func pollForAuth(interval: Double, clientId: String, deviceCode: String, callback: @escaping () -> ()) {
+    func pollForAuth(interval: Double, clientId: String, deviceCode: String) {
         var count = 0
         while (count < 20) {
             sleep(uint32(interval))
@@ -97,7 +97,6 @@ class GitHub {
                     self.loggedIn = true
                     self.saveToken()
                     self.getUserName()
-                    DispatchQueue.main.async { callback() }
                     return
                 }
             }
