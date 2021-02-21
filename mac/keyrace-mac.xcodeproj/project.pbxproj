@@ -13,7 +13,6 @@
 		4137816B25A1A9CF004AD04D /* GitHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137816A25A1A9CF004AD04D /* GitHub.swift */; };
 		4137817425A2289B004AD04D /* MenubarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137817325A2289B004AD04D /* MenubarItem.swift */; };
 		4D4E330D25E067AC009ADC9E /* KeyTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E330C25E067AC009ADC9E /* KeyTap.swift */; };
-		4D4E331025E0681E009ADC9E /* NSImage+circle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E330F25E0681E009ADC9E /* NSImage+circle.swift */; };
 		6B8B0D3B6D788EB8DF76B1B0 /* Pods_keyrace_mac.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAEA1BAC8E02E82DEC480300 /* Pods_keyrace_mac.framework */; };
 		C84C4B6C25E1C51100BD0454 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84C4B6B25E1C51100BD0454 /* Player.swift */; };
 		C8F2DC5F25DC742900502D4E /* MenuSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F2DC5E25DC742900502D4E /* MenuSettings.swift */; };
@@ -29,7 +28,6 @@
 		4137816A25A1A9CF004AD04D /* GitHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHub.swift; sourceTree = "<group>"; };
 		4137817325A2289B004AD04D /* MenubarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenubarItem.swift; sourceTree = "<group>"; };
 		4D4E330C25E067AC009ADC9E /* KeyTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyTap.swift; sourceTree = "<group>"; };
-		4D4E330F25E0681E009ADC9E /* NSImage+circle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+circle.swift"; sourceTree = "<group>"; };
 		5DFFC29E2F953C16F277CF7F /* Pods-keyrace-mac.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-keyrace-mac.release.xcconfig"; path = "Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac.release.xcconfig"; sourceTree = "<group>"; };
 		C84C4B6B25E1C51100BD0454 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		C8F2DC5A25DB4BDD00502D4E /* keyrace-mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "keyrace-mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -77,7 +75,6 @@
 				4137817325A2289B004AD04D /* MenubarItem.swift */,
 				C8F2DC5E25DC742900502D4E /* MenuSettings.swift */,
 				C84C4B6B25E1C51100BD0454 /* Player.swift */,
-				4D4E330F25E0681E009ADC9E /* NSImage+circle.swift */,
 				4137815B25A19C3B004AD04D /* Assets.xcassets */,
 				4137816025A19C3B004AD04D /* Info.plist */,
 				4137816125A19C3B004AD04D /* keyrace_mac.entitlements */,
@@ -215,7 +212,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4D4E331025E0681E009ADC9E /* NSImage+circle.swift in Sources */,
 				4137816B25A1A9CF004AD04D /* GitHub.swift in Sources */,
 				4D4E330D25E067AC009ADC9E /* KeyTap.swift in Sources */,
 				4137817425A2289B004AD04D /* MenubarItem.swift in Sources */,

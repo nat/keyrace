@@ -21,7 +21,7 @@ extension Player {
         if let data = try? Data.init(contentsOf: url!, options: []) {
             let avatar = NSImage(data: data)!
             avatar.size = NSSizeFromString("100,100")
-            return avatar.circle()
+            return avatar
         }
         return NSImage()
     }
@@ -43,40 +43,49 @@ extension Player {
 
 struct LeaderboardView: View {
     @ObservedObject var leaderboard: KeyTap
+    @Environment(\.openURL) var openURL
     
     var body: some View {
-        List(leaderboard.players.indexed(), id: \.1.username) { index, player in
-            // Create the profile image in a button so it is a link.
-            Button(action: {
-                if let github = URL(string: player.profileLink()) {
-                    NSWorkspace.shared.open(github)
+        Section {
+            List(leaderboard.players.indexed(), id: \.1.username) { index, player in
+                // Create the profile image in a button so it is a link.
+                Button(action: {
+                    openProfile(player)
+                }) {
+                    Image(nsImage: player.avatar())
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 25, height: 25, alignment: .center)
+                        .clipShape(Circle())
+                        .shadow(radius: 2)
                 }
-             }) {
-                Image(nsImage: player.avatar())
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 25, height: 25, alignment: .center)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .scaledToFit()
-            .padding(EdgeInsets(top: 2.5, leading: 0, bottom: 2.5, trailing: 0))
+                .buttonStyle(PlainButtonStyle())
+                .scaledToFit()
+                .padding(EdgeInsets(top: 2.5, leading: 0, bottom: 2.5, trailing: 0))
             
-            // Print the username as a link.
-            Link("@" + player.username,
-                 destination: URL(string: "https://github.com/" + player.username)!)
-                .foregroundColor(Color(NSColor/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/))
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .frame(width: 100, alignment: .leading)
+                // Print the username as a link.
+                Link("@" + player.username,
+                     destination: URL(string: "https://github.com/" + player.username)!)
+                    .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .frame(width: 100, alignment: .leading)
             
-            // Print the score.
-            Text(player.scoreString(index: index))
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundColor(.black)
+                // Print the score.
+                Text(player.scoreString(index: index))
+                    .font(.system(size: 12, design: .monospaced))
                 
+            }
+            .listStyle(SidebarListStyle())
+            .frame(minWidth: 350, maxWidth: 350, minHeight: 100, maxHeight: .infinity, alignment: .topLeading)
+            .fixedSize(horizontal: true, vertical: false)
         }
-        .listStyle(SidebarListStyle())
-        .frame(minWidth: 350, maxWidth: 350, minHeight: 100, maxHeight: .infinity, alignment: .topLeading)
-        .fixedSize(horizontal: true, vertical: false)
+    }
+    
+    func openProfile(_ player: Player) {
+        guard let url = URL(string: player.profileLink()) else {
+            return
+        }
+        openURL(url)
     }
 }
 

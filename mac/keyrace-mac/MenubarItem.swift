@@ -209,7 +209,7 @@ class MenubarItem : NSObject {
         
         let leaderboardView = NSHostingView(rootView: LeaderboardView(leaderboard: self.keyTap!))
         // Figure out how to get this to resize.
-        leaderboardView.frame = CGRect(x: 0, y: 0, width: 350, height: 300)
+        leaderboardView.frame = CGRect(x: 0, y: 0, width: 350, height: 210)
         self.leaderboardItem.view = leaderboardView
         
         quitMenuItem.target = self
