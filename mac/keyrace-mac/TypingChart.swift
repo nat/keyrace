@@ -79,7 +79,7 @@ struct TypingChart: NSViewRepresentable {
     
     func makeNSView(context: Context) -> BarChartView {
         // Create the typing chart.
-        let chart = BarChartView(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
+        let chart = BarChartView()
         
         chart.legend.enabled = false
         chart.leftAxis.drawGridLinesEnabled = false

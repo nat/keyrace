@@ -75,8 +75,7 @@ struct LeaderboardView: View {
             
         }
         .listStyle(SidebarListStyle())
-        .frame(minWidth: 350, maxWidth: 350, minHeight: 100, maxHeight: .infinity, alignment: .topLeading)
-        .fixedSize(horizontal: true, vertical: false)
+        .frame(width: 350, height: (40 * CGFloat(keyTap.players.count)) + 20, alignment: .topLeading)
     }
     
     func openProfile(_ player: Player) {

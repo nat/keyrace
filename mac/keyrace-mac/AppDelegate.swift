@@ -44,7 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Create the popover
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 350, height: 900)
+        popover.contentSize = NSSize(width: 350, height: 1000)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: contentView)
         self.popover = popover
@@ -57,6 +57,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if self.popover.isShown {
                 self.popover.performClose(sender)
             } else {
+                let sizeThatFits = (self.popover.contentViewController as? NSHostingController<ContentView>)?.sizeThatFits(in: CGSize(width: 350, height: 0))
+                if sizeThatFits != nil {
+                    self.popover.contentSize = sizeThatFits!
+                }
+                
                 self.popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
             }
         }

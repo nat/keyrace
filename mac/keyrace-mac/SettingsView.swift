@@ -14,7 +14,7 @@ struct SettingsView: View {
     @AppStorage("onlyShowFollows") private var onlyShowFollows = UserDefaults.standard.onlyShowFollows
 
     var body: some View {
-        Form {
+        Menu("Settings") {
             Toggle("Only show users I follow", isOn: $onlyShowFollows)
             
             if gitHub.username != nil {
@@ -29,8 +29,10 @@ struct SettingsView: View {
                 quit()
             }
         }
-        .padding(20)
-        .frame(width: 350, height: 100, alignment: .topLeading)
+        .menuStyle(BorderlessButtonMenuStyle())
+        .padding(.leading, 10)
+        .padding(.trailing, 10)
+        .padding(.bottom, 10)
     }
     
     func login() {
