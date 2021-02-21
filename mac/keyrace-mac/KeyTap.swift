@@ -73,6 +73,10 @@ class KeyTap: ObservableObject {
     var minutes = [Int](repeating:0, count:1440)
     var keys = [Int](repeating: 0, count:256)
     
+    @Published var minutesChart: [Int] = []
+    @Published var hoursChart: [Int] = []
+    @Published var keysChart: [Int] = []
+    @Published var symbolsChart: [Int] = []
     
     @Published var players: [Player] = []
     @Published var onlyShowFollows: Bool = UserDefaults.standard.onlyShowFollows {
@@ -132,9 +136,15 @@ class KeyTap: ObservableObject {
         }
 
         saveCount()
+        
+        // Update all the charts.
+        updateMinutesChart()
+        updateHoursChart()
+        updateKeysChart()
+        updateSymbolsChart()
     }
 
-    func getMinutesChart() -> [Int] {
+    func updateMinutesChart() {
         // Return the last 20 minutes minutely
         let date = Date()
         let calendar = Calendar.current
@@ -146,27 +156,35 @@ class KeyTap: ObservableObject {
         for i in (0...20).reversed() {
             currMin - i > 0 ? mins.append(minutes[currMin - i]): mins.append(minutes[1440 + i - (20 - currMin)])
         }
-        return mins
+        DispatchQueue.main.async {
+            self.minutesChart = mins
+        }
     }
 
-    func getHoursChart() -> [Int] {
+    func updateHoursChart() {
         var hours = [Int](repeating: 0, count: 24)
 
         for i in 0..<minutes.count {
             hours[i/60] += minutes[i]
         }
 
-        return hours
+        DispatchQueue.main.async {
+            self.hoursChart = hours
+        }
     }
 
-    func getKeysChart() -> [Int] {
+    func updateKeysChart() {
         // Return key press counts for the lowercase alphabet
-        return Array(keys[97...97+25])
+        DispatchQueue.main.async {
+            self.keysChart = Array(self.keys[97...97+25])
+        }
     }
 
-    func getSymbolsChart() -> [Int] {
+    func updateSymbolsChart() {
         // Return key press counts for the the numbers
-        return Array(keys[33...57])
+        DispatchQueue.main.async {
+            self.symbolsChart = Array(self.keys[33...57])
+        }
     }
 
     func uploadKeycount() {
@@ -234,6 +252,12 @@ class KeyTap: ObservableObject {
         appDelegate.statusBarItem.button?.title = formatCount(count: keycount)
 
         uploadCount()
+        
+        // Update all the charts.
+        updateMinutesChart()
+        updateHoursChart()
+        updateKeysChart()
+        updateSymbolsChart()
     }
 
     func uploadCount () {

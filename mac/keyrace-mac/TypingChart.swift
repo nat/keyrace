@@ -5,10 +5,10 @@
 //  Created by Nat Friedman on 1/3/21.
 //
 
-import Foundation
-import Cocoa
-import SwiftUI
 import Charts
+import Cocoa
+import Foundation
+import SwiftUI
 
 class ChartValueFormatter: NSObject, IValueFormatter {
     func stringForValue(_ value: Double, entry: ChartDataEntry, dataSetIndex: Int, viewPortHandler: ViewPortHandler?) -> String {
@@ -68,8 +68,52 @@ public class SymbolAxisValueFormatter: NSObject, IAxisValueFormatter {
     }
 }
 
-class TypingChart: BarChartView {
-    func NewData(_ typingCount: [Int], color: [Int] = [255, 255, 0]) {
+struct TypingChart: NSViewRepresentable {
+    // TypingChart accepts a typingCount and a color.
+    var typingCount: [Int]
+    var color: [Int] = [255, 255, 0]
+    var granularity: Double
+    var valueFormatter: IAxisValueFormatter
+    var labelCount: Int
+    
+    
+    func makeNSView(context: Context) -> BarChartView {
+        // Create the typing chart.
+        let chart = BarChartView(frame: CGRect(x: 0, y: 0, width: 350, height: 100))
+        
+        chart.legend.enabled = false
+        chart.leftAxis.drawGridLinesEnabled = false
+        chart.leftAxis.drawAxisLineEnabled = false
+        chart.leftAxis.drawLabelsEnabled = false
+        chart.rightAxis.drawGridLinesEnabled = false
+        chart.rightAxis.drawAxisLineEnabled = false
+        chart.rightAxis.drawLabelsEnabled = false
+        chart.xAxis.drawGridLinesEnabled = false
+        chart.xAxis.drawAxisLineEnabled = false
+        chart.xAxis.drawLabelsEnabled = false
+        
+        chart.xAxis.labelPosition = .bottom
+        chart.xAxis.labelFont = .systemFont(ofSize: 8.0)
+        chart.xAxis.drawLabelsEnabled = true
+        chart.xAxis.granularity = granularity
+        if labelCount > 0 {
+            chart.xAxis.labelCount = labelCount
+        }
+        chart.xAxis.valueFormatter = valueFormatter
+        
+        chart.data = addData()
+        
+        return chart
+    }
+    
+    func updateNSView(_ nsView: BarChartView, context: Context) {
+        // When the typing count changes, change the view.
+        nsView.data = addData()
+    }
+    
+    typealias NSViewType = BarChartView
+    
+    func addData() -> BarChartData {
         let yse1 = typingCount.enumerated().map { x, y in return BarChartDataEntry(x: Double(x), y: Double(y)) }
 
         let data = BarChartData()
@@ -82,38 +126,6 @@ class TypingChart: BarChartView {
         let valueFormatter = ChartValueFormatter()
         data.setValueFormatter(valueFormatter)
 
-        self.data = data
-    }
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        let xArray = Array(1..<24)
-        let ys1 = xArray.map { x in return abs(sin(Double(x) / 2.0 / 3.141 * 1.5)) }
-        
-        let yse1 = ys1.enumerated().map { x, y in return BarChartDataEntry(x: Double(x), y: y) }
-
-        let data = BarChartData()
-        let ds1 = BarChartDataSet(entries: yse1, label: "Hello")
-        ds1.colors = [NSUIColor.red]
-        data.addDataSet(ds1)
-        data.barWidth = Double(0.5)
-        
-        self.data = data
-        
-        self.legend.enabled = false
-        self.leftAxis.drawGridLinesEnabled = false
-        self.leftAxis.drawAxisLineEnabled = false
-        self.leftAxis.drawLabelsEnabled = false
-        self.rightAxis.drawGridLinesEnabled = false
-        self.rightAxis.drawAxisLineEnabled = false
-        self.rightAxis.drawLabelsEnabled = false
-        self.xAxis.drawGridLinesEnabled = false
-        self.xAxis.drawAxisLineEnabled = false
-        self.xAxis.drawLabelsEnabled = false
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        return data
     }
 }

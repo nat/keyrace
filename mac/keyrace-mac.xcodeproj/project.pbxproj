@@ -11,7 +11,7 @@
 		4137815C25A19C3B004AD04D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815B25A19C3B004AD04D /* Assets.xcassets */; };
 		4137815F25A19C3B004AD04D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4137815E25A19C3B004AD04D /* Preview Assets.xcassets */; };
 		4137816B25A1A9CF004AD04D /* GitHub.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137816A25A1A9CF004AD04D /* GitHub.swift */; };
-		4137817425A2289B004AD04D /* MenubarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137817325A2289B004AD04D /* MenubarItem.swift */; };
+		4137817425A2289B004AD04D /* TypingChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4137817325A2289B004AD04D /* TypingChart.swift */; };
 		4D4E330D25E067AC009ADC9E /* KeyTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D4E330C25E067AC009ADC9E /* KeyTap.swift */; };
 		6B8B0D3B6D788EB8DF76B1B0 /* Pods_keyrace_mac.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FAEA1BAC8E02E82DEC480300 /* Pods_keyrace_mac.framework */; };
 		C84C4B6C25E1C51100BD0454 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84C4B6B25E1C51100BD0454 /* LeaderboardView.swift */; };
@@ -27,7 +27,7 @@
 		4137816025A19C3B004AD04D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4137816125A19C3B004AD04D /* keyrace_mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = keyrace_mac.entitlements; sourceTree = "<group>"; };
 		4137816A25A1A9CF004AD04D /* GitHub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHub.swift; sourceTree = "<group>"; };
-		4137817325A2289B004AD04D /* MenubarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenubarItem.swift; sourceTree = "<group>"; };
+		4137817325A2289B004AD04D /* TypingChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypingChart.swift; sourceTree = "<group>"; };
 		4D4E330C25E067AC009ADC9E /* KeyTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyTap.swift; sourceTree = "<group>"; };
 		5DFFC29E2F953C16F277CF7F /* Pods-keyrace-mac.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-keyrace-mac.release.xcconfig"; path = "Target Support Files/Pods-keyrace-mac/Pods-keyrace-mac.release.xcconfig"; sourceTree = "<group>"; };
 		C84C4B6B25E1C51100BD0454 /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
@@ -74,7 +74,7 @@
 				4137815725A19C3A004AD04D /* AppDelegate.swift */,
 				4137816A25A1A9CF004AD04D /* GitHub.swift */,
 				4D4E330C25E067AC009ADC9E /* KeyTap.swift */,
-				4137817325A2289B004AD04D /* MenubarItem.swift */,
+				4137817325A2289B004AD04D /* TypingChart.swift */,
 				C861C49525E2D16800C7EC25 /* ContentView.swift */,
 				C8F2DC5E25DC742900502D4E /* SettingsView.swift */,
 				C84C4B6B25E1C51100BD0454 /* LeaderboardView.swift */,
@@ -218,7 +218,7 @@
 				4137816B25A1A9CF004AD04D /* GitHub.swift in Sources */,
 				4D4E330D25E067AC009ADC9E /* KeyTap.swift in Sources */,
 				C861C49625E2D16800C7EC25 /* ContentView.swift in Sources */,
-				4137817425A2289B004AD04D /* MenubarItem.swift in Sources */,
+				4137817425A2289B004AD04D /* TypingChart.swift in Sources */,
 				C84C4B6C25E1C51100BD0454 /* LeaderboardView.swift in Sources */,
 				C8F2DC5F25DC742900502D4E /* SettingsView.swift in Sources */,
 				4137815825A19C3A004AD04D /* AppDelegate.swift in Sources */,
