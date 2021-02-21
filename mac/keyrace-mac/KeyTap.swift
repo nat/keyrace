@@ -6,7 +6,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-func formatCount(count: Int) -> String {
+func formatCount(count: Int) -> NSAttributedString {
     var str = ""
 
     if (count == 0) {
@@ -34,8 +34,11 @@ func formatCount(count: Int) -> String {
         }
         str = "\(pfx)\(count) keys\(sfx)"
     }
-
-    return str
+    
+    // We use a monospaced font here so as the number changes the popover does not get jumpy.
+    let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+    let attributes = [NSAttributedString.Key.font: font]
+    return NSAttributedString(string: str, attributes: attributes)
 }
 
 func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
@@ -49,7 +52,7 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
             keyTap.increment(char)
         }
         DispatchQueue.main.async {
-            keyTap.appDelegate.statusBarItem.button?.title = formatCount(count: keyTap.keycount)
+            keyTap.appDelegate.statusBarItem.button?.attributedTitle = formatCount(count: keyTap.keycount)
         }
     }
 
@@ -249,7 +252,7 @@ class KeyTap: ObservableObject {
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
 
-        appDelegate.statusBarItem.button?.title = formatCount(count: keycount)
+        appDelegate.statusBarItem.button?.attributedTitle = formatCount(count: keycount)
 
         uploadCount()
         
