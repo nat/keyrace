@@ -59,8 +59,7 @@ struct LeaderboardView: View {
                     .shadow(radius: 2)
             }
             .buttonStyle(PlainButtonStyle())
-            .scaledToFit()
-            .padding(EdgeInsets(top: 2.5, leading: 0, bottom: 2.5, trailing: 0))
+            .padding(EdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 0))
         
             // Print the username as a link.
             Link("@" + player.username,
