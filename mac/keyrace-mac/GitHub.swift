@@ -93,10 +93,12 @@ class GitHub: ObservableObject {
                 let str = String(data: data!, encoding: .utf8)
                 let pollParams = str?.getParams()
                 if (pollParams!["access_token"] != nil) {
-                    self.token = pollParams!["access_token"]
-                    self.loggedIn = true
-                    self.saveToken()
-                    self.getUserName()
+                    DispatchQueue.main.async {
+                        self.token = pollParams!["access_token"]
+                        self.loggedIn = true
+                        self.saveToken()
+                        self.getUserName()
+                    }
                     return
                 }
             }
@@ -117,7 +119,9 @@ class GitHub: ObservableObject {
         if (error == nil), data != nil, let response = response as? HTTPURLResponse, response.statusCode == 200 {
             if let json = try? JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any] {
                 if let login = json["login"] as? String {
-                    username = login
+                    DispatchQueue.main.async {
+                        self.username = login
+                    }
                 }
             }
         } else if let response = response as? HTTPURLResponse, response.statusCode == 401 {
