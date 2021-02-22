@@ -106,7 +106,7 @@ class KeyTap {
 
         if keys.indices.contains(Int(keyCode)) {
             keys[Int(keyCode)] += 1
-        } else {
+        } else if keys.count > keyCode {
             keys[Int(keyCode)] = 0
         }
 
