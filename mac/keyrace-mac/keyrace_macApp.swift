@@ -141,10 +141,10 @@ class KeyTap {
         let currMin = hour*60 + min
         
         var mins : [Int] = []
-        for i in (0...20).reversed() {
-            currMin - i > 0 ? mins.append(minutes[currMin - i]): mins.append(minutes[1440 + i - (20 - currMin)])
+        for i in (0...20) {
+            currMin - i >= 0 ? mins.append(minutes[currMin - i]): mins.append(minutes[1440 + (20-i) - currMin])
         }
-        return mins
+        return mins.reversed()
     }
 
     func getHoursChart() -> [Int] {
