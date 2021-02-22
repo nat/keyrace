@@ -4,51 +4,30 @@
 //
 //  Created by Nat Friedman on 1/2/21.
 //
-
+import Cocoa
+import Combine
 import Foundation
 import SwiftUI
-import Cocoa
 
 class GitHub: ObservableObject {
-    static let TOKEN_FILE = ".keyrace.ghtoken"
     @Published var loggedIn : Bool = false
-    @Published var username : String?
-    @Published var token : String?
-    
+    @Published var username: String = UserDefaults.standard.githubUsername {
+        didSet {
+            // Update UserDefaults whenever our local value for username is updated.
+            UserDefaults.standard.githubUsername = username
+        }
+    }
+    @Published var token: String = UserDefaults.standard.githubToken {
+        didSet {
+            // Update UserDefaults whenever our local value for token is updated.
+            UserDefaults.standard.githubToken = token
+        }
+    }
+
     init() {
-        loadToken()
-    }
-    
-    private func loadToken() {
-        if self.token != nil {
-            return
-        }
-        
-        let filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
-        self.token = try? String(contentsOf: filename, encoding: .utf8)
-        if token != nil {
-            getUserName() // FIXME: save/load username in a file to avoid this
-            self.loggedIn = true
-        } else {
-            return
-        }
-    }
-    
-    private func saveToken() {
-        if token == nil {
-            return
-        }
-
-        let path = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
-        
-        do {
-            try token!.write(to: path, atomically: true, encoding: String.Encoding.utf8)
-            var attributes = [FileAttributeKey : Any]()
-            attributes[.posixPermissions] = 0o600
-            try FileManager.default.setAttributes(attributes, ofItemAtPath: path.path)
-
-        } catch {
-            NSLog("Could not save token to \(path.path)")
+        if self.username.isEmpty && !self.token.isEmpty {
+            // We have a token but not a username, let's get the username.
+            getUserName()
         }
     }
     
@@ -94,9 +73,8 @@ class GitHub: ObservableObject {
                 let pollParams = str?.getParams()
                 if (pollParams!["access_token"] != nil) {
                     DispatchQueue.main.async {
-                        self.token = pollParams!["access_token"]
+                        self.token = pollParams!["access_token"] ?? ""
                         self.loggedIn = true
-                        self.saveToken()
                         self.getUserName()
                     }
                     return
@@ -107,33 +85,29 @@ class GitHub: ObservableObject {
     }
     
     func getUserName() {
-        if token == nil {
+        if token.isEmpty {
+            // If we have an empty token, return early.
             return
         }
         
         let url = URL(string: "https://api.github.com/user")!
         var req = URLRequest(url: url)
-        req.addValue("token \(token!)", forHTTPHeaderField: "Authorization")
+        req.addValue("token \(token)", forHTTPHeaderField: "Authorization")
         req.httpMethod = "GET"
         let (data, response, error) = URLSession.shared.performSynchronously(request: req)
         if (error == nil), data != nil, let response = response as? HTTPURLResponse, response.statusCode == 200 {
             if let json = try? JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any] {
                 if let login = json["login"] as? String {
                     DispatchQueue.main.async {
+                        // Set the username.
                         self.username = login
                     }
                 }
             }
         } else if let response = response as? HTTPURLResponse, response.statusCode == 401 {
-            // Bad credentials, therefore user needs to re-authenticate, so we can remove the file.
-            let filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
-            
-            do {
-                self.token = ""
-                try FileManager.default.removeItem(at: filename)
-            } catch {
-                NSLog("Could not delete old token from \(filename)")
-            }
+            // Bad credentials, therefore user needs to re-authenticate, so we can set the
+            // token back to an empty string.
+            self.token = ""
         }
     }
 }

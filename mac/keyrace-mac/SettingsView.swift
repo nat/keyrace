@@ -17,8 +17,8 @@ struct SettingsView: View {
         Menu("Settings") {
             Toggle("Only show users I follow", isOn: $onlyShowFollows)
             
-            if gitHub.username != nil {
-                Text("Logged in as @" + gitHub.username!)
+            if !gitHub.username.isEmpty {
+                Text("Logged in as @" + gitHub.username)
             } else {
                 Button("Login with GitHub") {
                     login()
@@ -36,7 +36,7 @@ struct SettingsView: View {
     }
     
     func login() {
-        if !(gitHub.token ?? "").isEmpty {
+        if !gitHub.token.isEmpty {
             gitHub.getUserName()
             return
         }
@@ -77,13 +77,5 @@ struct SettingsView: View {
     func quit() {
         print("quitting")
         exit(0)
-    }
-}
-
-// define key for observing
-extension UserDefaults {
-    @objc dynamic var onlyShowFollows: Bool {
-        get { bool(forKey: "onlyShowFollows") }
-        set { setValue(newValue, forKey: "onlyShowFollows") }
     }
 }

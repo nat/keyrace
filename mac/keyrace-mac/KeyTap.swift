@@ -67,14 +67,34 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
 // and we’ll use @Published to send updates whenever the player list changes.
 class KeyTap: ObservableObject {
     var appDelegate : AppDelegate
-    var keycount = 0
     var lastDay = -1
     var lastMin = -1
     var timerRunning = false
     var keyTrapSetup = false
     var KEYRACE_HOST = "keyrace.app"
-    var minutes = [Int](repeating:0, count:1440)
-    var keys = [Int](repeating: 0, count:256)
+    
+    // Load values from UserDefaults.
+    var keycount: Int = UserDefaults.standard.keyCount {
+        didSet {
+            // Update UserDefaults whenever our local value for keycount is updated.
+            UserDefaults.standard.keyCount = keycount
+        }
+    }
+    var minutes: [Int] = UserDefaults.standard.minutes {
+        didSet {
+            // Update UserDefaults whenever our local value for minutes is updated.
+            UserDefaults.standard.minutes = minutes
+        }
+    }
+    var keys: [Int] = UserDefaults.standard.keys {
+        didSet {
+            // Update UserDefaults whenever our local value for keys is updated.
+            UserDefaults.standard.keys = keys
+        }
+    }
+    
+    // Setup the dateFormatter.
+    var dateFormatter = DateFormatter()
     
     @Published var minutesChart: [Int] = []
     @Published var hoursChart: [Int] = []
@@ -82,16 +102,17 @@ class KeyTap: ObservableObject {
     @Published var symbolsChart: [Int] = []
     
     @Published var players: [Player] = []
-    @Published var onlyShowFollows: Bool = UserDefaults.standard.onlyShowFollows {
-        didSet {
-            UserDefaults.standard.onlyShowFollows = onlyShowFollows
-        }
-    }
+    @Published var onlyShowFollows: Bool = UserDefaults.standard.onlyShowFollows
 
     private var cancelable: AnyCancellable?
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
         
+        // Initialize the style for the date formatter.
+        self.dateFormatter.dateStyle = .full
+        
+        // Listen for changes to onlyShowFollows, we need to do this
+        // because the SettingsView changes onlyShowFollows.
         cancelable = UserDefaults.standard.publisher(for: \.onlyShowFollows)
             .sink(receiveValue: { [weak self] newValue in
                 guard let self = self else { return }
@@ -139,14 +160,17 @@ class KeyTap: ObservableObject {
         }
 
         saveCount()
-        
+        updateCharts()
+    }
+
+    func updateCharts() {
         // Update all the charts.
         updateMinutesChart()
         updateHoursChart()
         updateKeysChart()
         updateSymbolsChart()
     }
-
+    
     func updateMinutesChart() {
         // Return the last 20 minutes minutely
         let date = Date()
@@ -191,7 +215,8 @@ class KeyTap: ObservableObject {
     }
 
     func uploadKeycount() {
-        if appDelegate.gitHub?.token == nil {
+        if UserDefaults.standard.githubToken.isEmpty {
+            // Token is empty, return early.
             return
         }
 
@@ -205,7 +230,7 @@ class KeyTap: ObservableObject {
         }
 
         var request = URLRequest(url: url.url!)
-        request.addValue("Bearer \(appDelegate.gitHub!.token!)", forHTTPHeaderField: "Authorization")
+        request.addValue("Bearer \(UserDefaults.standard.githubToken)", forHTTPHeaderField: "Authorization")
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data,                            // is there data
@@ -255,12 +280,7 @@ class KeyTap: ObservableObject {
         appDelegate.statusBarItem.button?.attributedTitle = formatCount(count: keycount)
 
         uploadCount()
-        
-        // Update all the charts.
-        updateMinutesChart()
-        updateHoursChart()
-        updateKeysChart()
-        updateSymbolsChart()
+        updateCharts()
     }
 
     func uploadCount () {
@@ -268,94 +288,33 @@ class KeyTap: ObservableObject {
     }
 
     func saveCount() {
-        var attributes = [FileAttributeKey : Any]()
-        attributes[.posixPermissions] = 0o600
-
-        var filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.tmp")
-        var str = String(keycount)
-        do {
-            try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
-            try FileManager.default.setAttributes(attributes, ofItemAtPath: filename.path)
-        } catch {
-            NSLog("Could not write keycount to \(filename.path)")
-            // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
-        }
-
-        filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.minutes.tmp")
-        let minStrings = minutes.map({ String($0) })
-        str = minStrings.joined(separator: ",")
-        do {
-            try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
-            try FileManager.default.setAttributes(attributes, ofItemAtPath: filename.path)
-        } catch {
-            NSLog("Could not write keycount to \(filename.path)")
-            // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
-        }
-
-        filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.histogram.tmp")
-        let keyStrings = keys.map({ String($0) })
-        str = keyStrings.joined(separator: ",")
-        do {
-            try str.write(to: filename, atomically: true, encoding: String.Encoding.utf8)
-            try FileManager.default.setAttributes(attributes, ofItemAtPath: filename.path)
-        } catch {
-            NSLog("Could not write histogram to \(filename.path)")
-            // failed to write file – bad permissions, bad filename, missing permissions, or more likely it can't be converted to the encoding
-        }
-
+        // Save the keycount to UserDefaults.
+        let now = Date()
+        UserDefaults.standard.keyCountLastUpdated = dateFormatter.string(from: now)
     }
 
     func loadCount() {
+        // Get today's date info.
         let date = Date()
         let calendar = Calendar.current
         let day = calendar.component(.day, from: date)
         let month = calendar.component(.month, from:date)
 
-        // Load the total daily count
-        var filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.tmp")
-        do {
-            let attr = try FileManager.default.attributesOfItem(atPath: filename.path)
-            let mtime = attr[FileAttributeKey.modificationDate] as! Date
-            lastDay = calendar.component(.day, from:mtime)
-            let lastMonth = calendar.component(.month, from:mtime)
-
-            if (lastDay == day && lastMonth == month) {
-                let str = try String(contentsOf: filename, encoding: .utf8)
-                keycount = Int(str) ?? 0
-            }
-        } catch { }
-
-        // Load the hourly histogram
-        filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.minutes.tmp")
-        do {
-            let attr = try FileManager.default.attributesOfItem(atPath: filename.path)
-            let mtime = attr[FileAttributeKey.modificationDate] as! Date
-            let lastDay = calendar.component(.day, from:mtime)
-            let lastMonth = calendar.component(.month, from:mtime)
-
-            if (lastDay == day && lastMonth == month) {
-                let str = try String(contentsOf: filename, encoding: .utf8)
-                let minStr = str.split(separator: ",")
-                minutes = minStr.map { x in return Int(x) ?? 0 }
-            }
-        } catch { }
-
-        // Load the key histogram
-        filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".keyrace.histogram.tmp")
-        do {
-            let attr = try FileManager.default.attributesOfItem(atPath: filename.path)
-            let mtime = attr[FileAttributeKey.modificationDate] as! Date
-            let lastDay = calendar.component(.day, from:mtime)
-            let lastMonth = calendar.component(.month, from:mtime)
-
-            if (lastDay == day && lastMonth == month) {
-                let str = try String(contentsOf: filename, encoding: .utf8)
-                let keyStr = str.split(separator: ",")
-                keys = keyStr.map { x in return Int(x) ?? 0 }
-            }
-        } catch { }
-
-
+        // Set the count back to zero if the UserDefault for keyCountLastUpdated is not from today.
+        // Get the date the keycount was last updated.
+        let keyCountLastUpdated = dateFormatter.date(from: UserDefaults.standard.keyCountLastUpdated)!
+        lastDay = calendar.component(.day, from: keyCountLastUpdated)
+        let lastMonth = calendar.component(.month, from: keyCountLastUpdated)
+        
+        if (lastDay != day || lastMonth != month) {
+            // Reset the keycount back to 0.
+            // In the case of success, it would have already loaded from UserDefaults.
+            keycount = 0
+            // Set the minutes back to 0.
+            minutes = [Int](repeating:0, count:1440)
+            // Set the keys back to 0.
+            keys = [Int](repeating:0, count:256)
+        }
     }
 
     func getAccessibilityPermissions() {
