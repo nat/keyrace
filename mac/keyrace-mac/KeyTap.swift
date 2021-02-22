@@ -74,7 +74,7 @@ class KeyTap: ObservableObject {
     var KEYRACE_HOST = "https://keyrace.app"
     
     // Load values from UserDefaults.
-    var keycount: Int = UserDefaults.standard.keyCount {
+    @Published var keycount: Int = UserDefaults.standard.keyCount {
         didSet {
             // Update UserDefaults whenever our local value for keycount is updated.
             UserDefaults.standard.keyCount = keycount
@@ -82,8 +82,10 @@ class KeyTap: ObservableObject {
     }
     var minutes: [Int] = UserDefaults.standard.minutes {
         didSet {
-            // Update UserDefaults whenever our local value for minutes is updated.
-            UserDefaults.standard.minutes = minutes
+            DispatchQueue.main.async {
+                // Update UserDefaults whenever our local value for minutes is updated.
+                UserDefaults.standard.minutes = self.minutes
+            }
         }
     }
     var keys: [Int] = UserDefaults.standard.keys {
@@ -143,7 +145,9 @@ class KeyTap: ObservableObject {
             })
         }
 
-        keycount += 1
+        DispatchQueue.main.async {
+            self.keycount += 1
+        }
 
         let hour = calendar.component(.hour, from: date)
         let minute = calendar.component(.minute, from: date)

@@ -188,11 +188,15 @@ extension Array where Element == String  {
     }
     
     func getPercentage(_ keyTap: KeyTap) -> Double {
+        return (Double(keyTap.keyboardData[self]!) / Double(keyTap.keycount)) * 100
+    }
+    
+    func getFillPercentage(_ keyTap: KeyTap) -> Double {
         return (Double(keyTap.keyboardData[self]!) / Double(keyTap.maxKeyboardCount)) * 100
     }
     
     func getFill(_ keyTap: KeyTap) -> RadialGradient {
-        let percentage = self.getPercentage(keyTap)
+        let percentage = self.getFillPercentage(keyTap)
         
         // Calculate the color and the percentage.
         var color = Color.green
