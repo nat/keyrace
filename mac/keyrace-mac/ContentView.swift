@@ -14,7 +14,7 @@ struct ContentView: View {
     
     var body: some View {
         Section {
-            TypingChart(typingCount: keyTap.minutesChart, color: [255, 0, 0], granularity: 3,
+            TypingChart(typingCount: keyTap.minutesChart, color: [255, 253, 86], granularity: 3,
                         valueFormatter: MinAxisValueFormatter(), labelCount: 0)
                 .frame(width: 350, height: 100, alignment: .center)
             TypingChart(typingCount: keyTap.hoursChart, color: [255, 0, 0], granularity: 3,
@@ -29,7 +29,7 @@ struct ContentView: View {
                 .padding(.bottom, 10)
         }
         Section {
-            KeyboardView()
+            KeyboardView(keyTap: keyTap)
         }
         Section {
             LeaderboardView(keyTap: keyTap, gitHub: gitHub)

@@ -100,6 +100,8 @@ class KeyTap: ObservableObject {
     @Published var hoursChart: [Int] = []
     @Published var keysChart: [Int] = []
     @Published var symbolsChart: [Int] = []
+    @Published var keyboardData: [[String]: Int] = [:]
+    @Published var maxKeyboardCount: Int = 0
     
     @Published var players: [Player] = []
     @Published var onlyShowFollows: Bool = UserDefaults.standard.onlyShowFollows
@@ -147,10 +149,12 @@ class KeyTap: ObservableObject {
         let minute = calendar.component(.minute, from: date)
         minutes[hour*60 + minute] += 1
 
-        if keys.indices.contains(Int(keyCode)) {
-            keys[Int(keyCode)] += 1
-        } else {
-            keys[Int(keyCode)] = 0
+        DispatchQueue.main.async {
+            if self.keys.indices.contains(Int(keyCode)) {
+                self.keys[Int(keyCode)] += 1
+            } else {
+                self.keys[Int(keyCode)] = 0
+            }
         }
 
         // Upload every minute
@@ -167,6 +171,7 @@ class KeyTap: ObservableObject {
         // Update all the charts.
         updateMinutesChart()
         updateHoursChart()
+        updateKeyboardData()
         updateKeysChart()
         updateSymbolsChart()
     }
@@ -211,6 +216,20 @@ class KeyTap: ObservableObject {
         // Return key press counts for the the numbers
         DispatchQueue.main.async {
             self.symbolsChart = Array(self.keys[33...57])
+        }
+    }
+    
+    func updateKeyboardData() {
+        // Iterate over all the keys and count for the keyboard layout.
+        DispatchQueue.main.async {
+            for row in ROWS {
+                for char in row {
+                    // Update the value in our keyboardData dictionary.
+                    self.keyboardData.updateValue(char.getCount(self.keys), forKey: char)
+                }
+            }
+            
+            self.maxKeyboardCount = self.keyboardData.values.max() ?? 0
         }
     }
 
