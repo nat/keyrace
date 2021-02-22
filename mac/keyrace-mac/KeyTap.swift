@@ -71,7 +71,7 @@ class KeyTap: ObservableObject {
     var lastMin = -1
     var timerRunning = false
     var keyTrapSetup = false
-    var KEYRACE_HOST = "keyrace.app"
+    var KEYRACE_HOST = "https://keyrace.app"
     
     // Load values from UserDefaults.
     var keycount: Int = UserDefaults.standard.keyCount {
@@ -220,7 +220,7 @@ class KeyTap: ObservableObject {
             return
         }
 
-        var url = URLComponents(string: "https://\(KEYRACE_HOST)/count")!
+        var url = URLComponents(string: "\(KEYRACE_HOST)/count")!
         url.queryItems = [
             URLQueryItem(name: "count", value: "\(keycount)")
         ]

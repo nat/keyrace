@@ -13,7 +13,7 @@ struct ContentView: View {
     @ObservedObject var gitHub: GitHub
     
     var body: some View {
-        Group {
+        Section {
             TypingChart(typingCount: keyTap.minutesChart, color: [255, 0, 0], granularity: 3,
                         valueFormatter: MinAxisValueFormatter(), labelCount: 0)
                 .frame(width: 350, height: 100, alignment: .center)
@@ -28,7 +28,7 @@ struct ContentView: View {
                 .frame(width: 350, height: 100, alignment: .center)
         }
         Section {
-            LeaderboardView(keyTap: keyTap)
+            LeaderboardView(keyTap: keyTap, gitHub: gitHub)
         }
         Section {
             SettingsView(keyTap: keyTap, gitHub: gitHub)

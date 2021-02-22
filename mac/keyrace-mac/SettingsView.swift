@@ -15,10 +15,12 @@ struct SettingsView: View {
 
     var body: some View {
         Menu("Settings") {
-            Toggle("Only show users I follow", isOn: $onlyShowFollows)
-            
             if !gitHub.username.isEmpty {
+                Toggle("Only show users I follow", isOn: $onlyShowFollows)
                 Text("Logged in as @" + gitHub.username)
+                Button("Logout") {
+                    logout()
+                }
             } else {
                 Button("Login with GitHub") {
                     login()
@@ -33,6 +35,12 @@ struct SettingsView: View {
         .padding(.leading, 10)
         .padding(.trailing, 10)
         .padding(.bottom, 10)
+    }
+    
+    func logout() {
+        // Nullify the githubUsername and githubToken.
+        UserDefaults.standard.githubUsername = ""
+        UserDefaults.standard.githubToken = ""
     }
     
     func login() {

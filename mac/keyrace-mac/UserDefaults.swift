@@ -7,7 +7,7 @@
 
 import Foundation
 
-// Store data in user defaults.
+// Store data in UserDefaults.
 // This allows us to more easily access it later.
 extension UserDefaults {
     @objc dynamic var onlyShowFollows: Bool {

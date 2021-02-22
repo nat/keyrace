@@ -93,7 +93,7 @@ struct TypingChart: NSViewRepresentable {
         chart.xAxis.drawLabelsEnabled = false
         
         chart.xAxis.labelPosition = .bottom
-        chart.xAxis.labelFont = .systemFont(ofSize: 8.0)
+        chart.xAxis.labelFont = .systemFont(ofSize: 7.0)
         chart.xAxis.drawLabelsEnabled = true
         chart.xAxis.granularity = granularity
         if labelCount > 0 {

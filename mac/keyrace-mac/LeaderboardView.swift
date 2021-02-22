@@ -43,38 +43,41 @@ extension Player {
 
 struct LeaderboardView: View {
     @ObservedObject var keyTap: KeyTap
+    @ObservedObject var gitHub: GitHub
     @Environment(\.openURL) var openURL
     
     var body: some View {
-        List(keyTap.players.indexed(), id: \.1.username) { index, player in
-            // Create the profile image in a button so it is a link.
-            Button(action: {
-                openProfile(player)
-            }) {
-                Image(nsImage: player.avatar())
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 25, height: 25, alignment: .center)
-                    .clipShape(Circle())
-                    .shadow(radius: 2)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(EdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 0))
+        // This allows the leaderboard view to watch for when we login and update.
+        if !gitHub.username.isEmpty {
+            List(keyTap.players.indexed(), id: \.1.username) { index, player in
+                // Create the profile image in a button so it is a link.
+                Button(action: {
+                    openProfile(player)
+                }) {
+                    Image(nsImage: player.avatar())
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 25, height: 25, alignment: .center)
+                        .clipShape(Circle())
+                        .shadow(radius: 2)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(EdgeInsets(top: 2.5, leading: 2.5, bottom: 2.5, trailing: 0))
         
-            // Print the username as a link.
-            Link("@" + player.username,
-                 destination: URL(string: "https://github.com/" + player.username)!)
-                .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .frame(width: 100, alignment: .leading)
+                // Print the username as a link.
+                Link("@" + player.username,
+                     destination: URL(string: "https://github.com/" + player.username)!)
+                    .foregroundColor(/*@START_MENU_TOKEN@*/.blue/*@END_MENU_TOKEN@*/)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .frame(width: 100, alignment: .leading)
             
-            // Print the score.
-            Text(player.scoreString(index: index))
-                .font(.system(size: 12, design: .monospaced))
-            
+                // Print the score.
+                Text(player.scoreString(index: index))
+                    .font(.system(size: 12, design: .monospaced))
+            }
+            .listStyle(SidebarListStyle())
+            .frame(width: 350, height: (40 * CGFloat(keyTap.players.count)) + 20, alignment: .topLeading)
         }
-        .listStyle(SidebarListStyle())
-        .frame(width: 350, height: (40 * CGFloat(keyTap.players.count)) + 20, alignment: .topLeading)
     }
     
     func openProfile(_ player: Player) {
