@@ -26,6 +26,10 @@ struct ContentView: View {
             TypingChart(typingCount: keyTap.symbolsChart, color: [0, 255, 255], granularity: 1,
                         valueFormatter: SymbolAxisValueFormatter(), labelCount: 25)
                 .frame(width: 350, height: 100, alignment: .center)
+                .padding(.bottom, 10)
+        }
+        Section {
+            KeyboardView()
         }
         Section {
             LeaderboardView(keyTap: keyTap, gitHub: gitHub)
