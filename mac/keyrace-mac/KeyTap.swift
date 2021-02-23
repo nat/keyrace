@@ -135,8 +135,10 @@ class KeyTap: ObservableObject {
         let day = calendar.component(.day, from:date)
         if (lastDay != day) {
             lastDay = day
-            keycount = 0
-            keys = [Int](repeating:0, count:256)
+            DispatchQueue.main.async {
+                self.keycount = 0
+            }
+            self.keys = [Int](repeating:0, count:256)
 
             //  Clears our minutes, leaving the last 20 minutes, and than deletes the rest after 20 minutes
             minutes.replaceSubrange(0..<1420, with: repeatElement(0, count: 1420))
@@ -151,9 +153,9 @@ class KeyTap: ObservableObject {
 
         let hour = calendar.component(.hour, from: date)
         let minute = calendar.component(.minute, from: date)
-        minutes[hour*60 + minute] += 1
-
+        
         DispatchQueue.main.async {
+            self.minutes[hour*60 + minute] += 1
             if self.keys.indices.contains(Int(keyCode)) {
                 self.keys[Int(keyCode)] += 1
             } else {
@@ -165,10 +167,10 @@ class KeyTap: ObservableObject {
         if (lastMin != minute) {
             lastMin = minute
             uploadCount()
+            updateCharts()
         }
 
         saveCount()
-        updateCharts()
     }
 
     func updateCharts() {
@@ -325,7 +327,7 @@ class KeyTap: ObservableObject {
 
         // Set the count back to zero if the UserDefault for keyCountLastUpdated is not from today.
         // Get the date the keycount was last updated.
-        let keyCountLastUpdated = dateFormatter.date(from: UserDefaults.standard.keyCountLastUpdated)!
+        let keyCountLastUpdated = dateFormatter.date(from: UserDefaults.standard.keyCountLastUpdated) ?? Date()
         lastDay = calendar.component(.day, from: keyCountLastUpdated)
         let lastMonth = calendar.component(.month, from: keyCountLastUpdated)
         
