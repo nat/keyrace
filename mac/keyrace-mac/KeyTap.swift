@@ -95,9 +95,6 @@ class KeyTap: ObservableObject {
         }
     }
     
-    // Setup the dateFormatter.
-    var dateFormatter = DateFormatter()
-    
     @Published var minutesChart: [Int] = []
     @Published var hoursChart: [Int] = []
     @Published var keysChart: [Int] = []
@@ -111,9 +108,6 @@ class KeyTap: ObservableObject {
     private var cancelable: AnyCancellable?
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
-        
-        // Initialize the style for the date formatter.
-        self.dateFormatter.dateStyle = .full
         
         // Listen for changes to onlyShowFollows, we need to do this
         // because the SettingsView changes onlyShowFollows.
@@ -315,7 +309,7 @@ class KeyTap: ObservableObject {
     func saveCount() {
         // Save the keycount to UserDefaults.
         let now = Date()
-        UserDefaults.standard.keyCountLastUpdated = dateFormatter.string(from: now)
+        UserDefaults.standard.keyCountLastUpdated = now
     }
 
     func loadCount() {
@@ -327,7 +321,7 @@ class KeyTap: ObservableObject {
 
         // Set the count back to zero if the UserDefault for keyCountLastUpdated is not from today.
         // Get the date the keycount was last updated.
-        let keyCountLastUpdated = dateFormatter.date(from: UserDefaults.standard.keyCountLastUpdated) ?? Date()
+        let keyCountLastUpdated = UserDefaults.standard.keyCountLastUpdated
         lastDay = calendar.component(.day, from: keyCountLastUpdated)
         let lastMonth = calendar.component(.month, from: keyCountLastUpdated)
         

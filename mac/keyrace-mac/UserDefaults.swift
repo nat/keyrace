@@ -30,8 +30,8 @@ extension UserDefaults {
         set { setValue(newValue, forKey: "keyCount") }
     }
     
-    @objc dynamic var keyCountLastUpdated: String {
-        get { string(forKey: "keyCountLastUpdated") ?? "" }
+    @objc dynamic var keyCountLastUpdated: Date {
+        get { (object(forKey: "keyCountLastUpdated") as? Date) ?? Date() }
         set { setValue(newValue, forKey: "keyCountLastUpdated") }
     }
     
