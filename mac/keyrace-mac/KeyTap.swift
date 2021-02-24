@@ -182,7 +182,7 @@ class KeyTap: ObservableObject {
             self.minutes[hour*60 + minute] += 1
             if self.keys.indices.contains(Int(keyCode)) {
                 self.keys[Int(keyCode)] += 1
-            } else if keys.count > keyCode {
+            } else if self.keys.count > keyCode {
                 self.keys[Int(keyCode)] = 0
             }
         }
