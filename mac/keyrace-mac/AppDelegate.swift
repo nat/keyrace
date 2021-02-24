@@ -30,7 +30,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusBarItem = NSStatusBar.system.statusItem(withLength: CGFloat(NSStatusItem.variableLength))
         if let button = self.statusBarItem.button {
             button.title = "Setup Keyrace"
-            button.action = #selector(togglePopover(_:))
+            let clickGesture = NSClickGestureRecognizer(target: self, action: #selector(togglePopover))
+            button.addGestureRecognizer(clickGesture)
         }
         
         // Initialize these things so we can pass them to the ContentView().
