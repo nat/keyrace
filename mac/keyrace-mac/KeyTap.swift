@@ -73,7 +73,7 @@ class KeyTap: ObservableObject {
     var KEYRACE_HOST = "https://keyrace.app"
     
     // Load values from UserDefaults.
-    @Published var keycount: Int = UserDefaults.standard.keyCount {
+    var keycount: Int = UserDefaults.standard.keyCount {
         didSet {
             // Update UserDefaults whenever our local value for keycount is updated.
             UserDefaults.standard.keyCount = keycount
