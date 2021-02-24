@@ -4,55 +4,65 @@
 //
 //  Created by Nat Friedman on 1/2/21.
 //
-
+import Cocoa
+import Combine
 import Foundation
 import SwiftUI
-import Cocoa
 
-class GitHub {
-    static let TOKEN_FILE = ".keyrace.ghtoken"
-    var loggedIn : Bool = false
-    var username : String?
-    var token : String?
-    
+class GitHub: ObservableObject {
+    @Published var loggedIn : Bool = false
+    @Published var username: String = UserDefaults.standard.githubUsername {
+        didSet {
+            // Update UserDefaults whenever our local value for username is updated.
+            UserDefaults.standard.githubUsername = username
+        }
+    }
+    @Published var token: String = UserDefaults.standard.githubToken {
+        didSet {
+            // Update UserDefaults whenever our local value for token is updated.
+            UserDefaults.standard.githubToken = token
+        }
+    }
+
+    private var cancellableUsername: AnyCancellable?
+    private var cancellableToken: AnyCancellable?
     init() {
-        loadToken()
-    }
-    
-    private func loadToken() {
-        if self.token != nil {
-            return
-        }
+        // Listen for changes to githubUsername, we need to do this
+        // because the SettingsView changes githubUsername on logout to be empty.
+        cancellableUsername = UserDefaults.standard.publisher(for: \.githubUsername)
+            .sink(receiveValue: { [weak self] newValue in
+                guard let self = self else { return }
+                if newValue != self.username { // avoid cycling !!
+                    self.username = newValue
+                }
+            })
         
-        let filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
-        self.token = try? String(contentsOf: filename, encoding: .utf8)
-        if token != nil {
-            getUserName() // FIXME: save/load username in a file to avoid this
-            self.loggedIn = true
-        } else {
-            return
-        }
-    }
-    
-    private func saveToken() {
-        if token == nil {
-            return
-        }
-
-        let path = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
+        // Listen for changes to githubToken, we need to do this
+        // because the SettingsView changes githubToken on logout to be empty.
+        cancellableToken = UserDefaults.standard.publisher(for: \.githubToken)
+            .sink(receiveValue: { [weak self] newValue in
+                guard let self = self else { return }
+                if newValue != self.token { // avoid cycling !!
+                    self.token = newValue
+                }
+            })
         
-        do {
-            try token!.write(to: path, atomically: true, encoding: String.Encoding.utf8)
-            var attributes = [FileAttributeKey : Any]()
-            attributes[.posixPermissions] = 0o600
-            try FileManager.default.setAttributes(attributes, ofItemAtPath: path.path)
-
-        } catch {
-            NSLog("Could not save token to \(path.path)")
+        if self.username.isEmpty && !self.token.isEmpty {
+            // We have a token but not a username, let's get the username.
+            getUserName()
         }
     }
     
-    func startDeviceAuth(clientId: String, scope: String, callback: @escaping () -> ()) -> (userCode: String, verificationUri: String){
+    deinit {
+        if let c = cancellableUsername {
+            c.cancel()
+        }
+        if let c = cancellableToken {
+            c.cancel()
+        }
+    }
+    
+    func startDeviceAuth(clientId: String, scope: String) -> (userCode: String, verificationUri: String){
         let url = URL(string: "https://github.com/login/device/code")!
         
         var request = URLRequest(url: url)
@@ -69,7 +79,7 @@ class GitHub {
             let interval = Double(params?["interval"] ?? "15.0")!
             
             DispatchQueue.global(qos: .background).async {
-                self.pollForAuth(interval: interval * 2, clientId: clientId, deviceCode: params!["device_code"]!, callback: callback)
+                self.pollForAuth(interval: interval * 2, clientId: clientId, deviceCode: params!["device_code"]!)
             }
 
             return (params!["user_code"]!, params!["verification_uri"]!)
@@ -78,7 +88,7 @@ class GitHub {
         return ("", "")
     }
     
-    func pollForAuth(interval: Double, clientId: String, deviceCode: String, callback: @escaping () -> ()) {
+    func pollForAuth(interval: Double, clientId: String, deviceCode: String) {
         var count = 0
         while (count < 20) {
             sleep(uint32(interval))
@@ -93,11 +103,11 @@ class GitHub {
                 let str = String(data: data!, encoding: .utf8)
                 let pollParams = str?.getParams()
                 if (pollParams!["access_token"] != nil) {
-                    self.token = pollParams!["access_token"]
-                    self.loggedIn = true
-                    self.saveToken()
-                    self.getUserName()
-                    DispatchQueue.main.async { callback() }
+                    DispatchQueue.main.async {
+                        self.token = pollParams!["access_token"] ?? ""
+                        self.loggedIn = true
+                        self.getUserName()
+                    }
                     return
                 }
             }
@@ -106,31 +116,29 @@ class GitHub {
     }
     
     func getUserName() {
-        if token == nil {
+        if token.isEmpty {
+            // If we have an empty token, return early.
             return
         }
         
         let url = URL(string: "https://api.github.com/user")!
         var req = URLRequest(url: url)
-        req.addValue("token \(token!)", forHTTPHeaderField: "Authorization")
+        req.addValue("token \(token)", forHTTPHeaderField: "Authorization")
         req.httpMethod = "GET"
         let (data, response, error) = URLSession.shared.performSynchronously(request: req)
         if (error == nil), data != nil, let response = response as? HTTPURLResponse, response.statusCode == 200 {
             if let json = try? JSONSerialization.jsonObject(with: data!, options: []) as? [String: Any] {
                 if let login = json["login"] as? String {
-                    username = login
+                    DispatchQueue.main.async {
+                        // Set the username.
+                        self.username = login
+                    }
                 }
             }
         } else if let response = response as? HTTPURLResponse, response.statusCode == 401 {
-            // Bad credentials, therefore user needs to re-authenticate, so we can remove the file.
-            let filename = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(GitHub.TOKEN_FILE)
-            
-            do {
-                self.token = ""
-                try FileManager.default.removeItem(at: filename)
-            } catch {
-                NSLog("Could not delete old token from \(filename)")
-            }
+            // Bad credentials, therefore user needs to re-authenticate, so we can set the
+            // token back to an empty string.
+            self.token = ""
         }
     }
 }
