@@ -24,12 +24,12 @@ class GitHub: ObservableObject {
         }
     }
 
-    private var cancelableUsername: AnyCancellable?
-    private var cancelableToken: AnyCancellable?
+    private var cancellableUsername: AnyCancellable?
+    private var cancellableToken: AnyCancellable?
     init() {
         // Listen for changes to githubUsername, we need to do this
         // because the SettingsView changes githubUsername on logout to be empty.
-        cancelableUsername = UserDefaults.standard.publisher(for: \.githubUsername)
+        cancellableUsername = UserDefaults.standard.publisher(for: \.githubUsername)
             .sink(receiveValue: { [weak self] newValue in
                 guard let self = self else { return }
                 if newValue != self.username { // avoid cycling !!
@@ -39,7 +39,7 @@ class GitHub: ObservableObject {
         
         // Listen for changes to githubToken, we need to do this
         // because the SettingsView changes githubToken on logout to be empty.
-        cancelableToken = UserDefaults.standard.publisher(for: \.githubToken)
+        cancellableToken = UserDefaults.standard.publisher(for: \.githubToken)
             .sink(receiveValue: { [weak self] newValue in
                 guard let self = self else { return }
                 if newValue != self.token { // avoid cycling !!
@@ -50,6 +50,15 @@ class GitHub: ObservableObject {
         if self.username.isEmpty && !self.token.isEmpty {
             // We have a token but not a username, let's get the username.
             getUserName()
+        }
+    }
+    
+    deinit {
+        if let c = cancellableUsername {
+            c.cancel()
+        }
+        if let c = cancellableToken {
+            c.cancel()
         }
     }
     

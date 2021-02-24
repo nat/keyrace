@@ -68,7 +68,6 @@ func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent
 class KeyTap: ObservableObject {
     var appDelegate : AppDelegate
     var lastDay = -1
-    var lastMin = -1
     var timerRunning = false
     var keyTrapSetup = false
     var KEYRACE_HOST = "https://keyrace.app"
@@ -105,20 +104,51 @@ class KeyTap: ObservableObject {
     @Published var players: [Player] = []
     @Published var onlyShowFollows: Bool = UserDefaults.standard.onlyShowFollows
 
-    private var cancelable: AnyCancellable?
+    private var cancellableOnlyShowFollow: AnyCancellable?
+    private var cancellableKeycount: AnyCancellable?
     init(_ appd: AppDelegate) {
         self.appDelegate = appd
         
         // Listen for changes to onlyShowFollows, we need to do this
         // because the SettingsView changes onlyShowFollows.
-        cancelable = UserDefaults.standard.publisher(for: \.onlyShowFollows)
+        cancellableOnlyShowFollow = UserDefaults.standard.publisher(for: \.onlyShowFollows)
             .sink(receiveValue: { [weak self] newValue in
                 guard let self = self else { return }
                 if newValue != self.onlyShowFollows { // avoid cycling !!
                     self.onlyShowFollows = newValue
-                    self.uploadCount()
+                    
+                    // Reload the leaderboard.
+                    self.uploadKeycount()
                 }
             })
+        
+        // We want to listen for changes to the keycount BUT
+        // we want to use debounce so that we wait until
+        // after a specified time interval elapses between events.
+        // This way we aren't spiking our CPU if someone is typing really fast.
+        // The status bar is updated outside this scope so only do compute heavy loads here.
+        cancellableKeycount = UserDefaults.standard.publisher(for: \.keyCount)
+            // Wait for a pause in the delivery of events from the upstream publisher.
+            // Only receive elements when the user pauses or stops typing.
+            // When they start typing again, the debounce holds event delivery until the next pause.
+            .debounce(for: .seconds(2), scheduler: DispatchQueue.main)
+            .sink(receiveValue: { [weak self] newValue in
+                guard let self = self else { return }
+                
+                // Update the leaderboard.
+                self.uploadKeycount()
+                // Update the charts.
+                self.updateCharts()
+            })
+    }
+    
+    deinit {
+        if let c = cancellableOnlyShowFollow {
+            c.cancel()
+        }
+        if let c = cancellableKeycount {
+            c.cancel()
+        }
     }
 
     func increment(_ keyCode: UInt16) {
@@ -157,14 +187,8 @@ class KeyTap: ObservableObject {
             }
         }
 
-        // Upload every minute
-        if (lastMin != minute) {
-            lastMin = minute
-            uploadCount()
-            updateCharts()
-        }
-
-        saveCount()
+        // Save the keyCountLastUpdated to UserDefaults and set it as now.
+        UserDefaults.standard.keyCountLastUpdated = Date()
     }
 
     func updateCharts() {
@@ -298,18 +322,10 @@ class KeyTap: ObservableObject {
 
         appDelegate.statusBarItem.button?.attributedTitle = formatCount(count: keycount)
 
-        uploadCount()
-        updateCharts()
-    }
-
-    func uploadCount () {
+        // Load the initial leaderboard.
         uploadKeycount()
-    }
-
-    func saveCount() {
-        // Save the keycount to UserDefaults.
-        let now = Date()
-        UserDefaults.standard.keyCountLastUpdated = now
+        // Load the initial charts.
+        updateCharts()
     }
 
     func loadCount() {
