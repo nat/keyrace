@@ -6,7 +6,7 @@ Daily multiplayer keyboard races for macos
 ## To install
 
 ```bash
-git clone https://github.com/nat/keyrace.git
+git clone https://github.com/BigGuy573/nat/keyrace.git
 cd keyrace/mac
 open keyrace-mac.xcworkspace
 ```
