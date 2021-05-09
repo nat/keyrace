@@ -2,8 +2,8 @@
 //
 // gcc keyrace.c -o keyrace -framework ApplicationServices -framework Carbon -Wall -g
 //
-// To start tracking, run as: keyrace <username> <team>
-// To print leaderboard, run: keyrace <team>
+// To start tracking, run as: keyrace <BigGuy573> <BuckosBits>
+// To print leaderboard, run: keyrace <Invest86 LLC>
 //
 // Just use "default" as your team if you don't have one.
 
