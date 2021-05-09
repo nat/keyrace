@@ -3,7 +3,7 @@ name: build mac app
 on: [push, pull_request]
 
 jobs:
-  build: BigGuy573/nat/keyrace/.github/workflows/build_app.yml
+  build: BigGuy573/keyrace/.github/workflows/build_app.yml
     runs-on: macOS-latest
     steps:
       - name: Checkout repository
@@ -21,7 +21,7 @@ jobs:
           path: ./build/mac
 - name: First interaction
   uses: actions/first-interaction@v1.1.0
-  with: BigGuy573/nat/keyrace/.github/workflows/build_app.yml
+  with: BigGuy573/keyrace/.github/workflows/build_app.yml
     # Token for the repository. Can be passed in using {{ secrets.GITHUB_TOKEN }}
     repo-token: 
     # Comment to post on an individual's first issue
